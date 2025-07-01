@@ -70,8 +70,8 @@ async function main() {
   // const spreadsheetId = extractSpreadsheetId(url);
   // const listId = extractListId(url);
 
-  const spreadsheetId = '1RE5U_gUq-gatGubvdhJvw-CHd2vkbszEBuHv6MSSr0k';
-  const listId = 1669197484;
+  const spreadsheetId = '1fgA8f8K5nCRpjX8Uyk_3T5S58AHyC2pRmNj2lDboQ-k';
+  const listId = 1054705355;
 
   if (!spreadsheetId) {
     console.error('Не удалось извлечь Spreadsheet ID из ссылки.');
@@ -109,7 +109,7 @@ async function main() {
     const { browser } = await connect({
       args: ['--start-maximized'],
       turnstile: true,
-      headless: false,
+      headless: true,
       // disableXvfb: true,
       customConfig: {},
       connectOption: {
@@ -151,7 +151,7 @@ async function main() {
       }
       if (!rowObject.prooflink && rowObject.prooflink.trim() == '') {
         console.log(' prooflink пустой');
-        const searchQuery = `site:linkedin.com/in ${rowObject.first_name} ${rowObject.last_name} ${rowObject.company}`;
+        const searchQuery = `site:linkedin.com ${rowObject.first_name} ${rowObject.last_name} ${rowObject.company}`;
         const encodedQuery = encodeURIComponent(searchQuery);
         const url = `https://www.google.com/search?q=${encodedQuery}`;
 
@@ -159,7 +159,7 @@ async function main() {
           await page.goto(url, {
             waitUntil: 'networkidle2',
           });
-          await page.clickAndWaitForNavigation('body');
+          // await page.clickAndWaitForNavigation('body');
           const hasRecaptcha = await page.evaluate(() => {
             return (
               !!document.querySelector('.g-recaptcha') ||
@@ -170,12 +170,16 @@ async function main() {
           let solved = [];
 
           if (hasRecaptcha) {
+            console.log('hasRecaptcha', hasRecaptcha);
             const {
               captchas = [],
               solved: solvedCaptchas = [],
               error = null,
             } = await page.solveRecaptchas();
             solved = solvedCaptchas;
+            if (solved.length) {
+              console.log('Капча пройдена');
+            }
 
             if (error) {
               console.error('Ошибка при решении капчи:', error);
@@ -186,13 +190,14 @@ async function main() {
             solved = [true]; // Просто чтобы пройти проверку ниже
           }
           if (solved.length) {
-            console.log('Капчи успешно решены');
             await new Promise((r) => setTimeout(r, 1000));
             await page.screenshot({
               path: 'google_search.png',
               fullPage: true,
             });
-            await page.waitForSelector('div[data-rpos="0"]');
+            await page.waitForSelector('div[data-rpos="0"]', {
+              timeout: 10000,
+            });
 
             const blockText = await parser(page, 'div[data-rpos="0"]');
 
@@ -283,7 +288,10 @@ function checkBlockForPerson(text, person) {
 
   // const hasFirstName = blockText.includes(firstName);
   // const hasLastName = blockText.includes(lastName);
-  const hasCompany = blockText.includes(company);
+  const companyVariants = getCompanyVariants(company, person.email.trim());
+  const hasCompany = companyVariants.some((variant) =>
+    blockText.includes(variant)
+  );
   const hasTitle = blockText.includes(title);
 
   const allFound = hasNameVariants && hasCompany;
@@ -335,6 +343,7 @@ function checkNameVariantsInText(text, firstName, lastName) {
     `${fName} ${lastInitial}.`, // Laurent P.
     `${firstInitial}. ${lName}`, // L. Prebende
     `${firstInitial}. ${lastInitial}.`, // L. P.
+    `${lName} ${fName} `, // Laurent Prebende
   ];
 
   const found = nameVariants.some((variant) => blockText.includes(variant));
@@ -351,4 +360,59 @@ function normalizeString(str) {
     .toLowerCase()
     .normalize('NFD') // разложение символов с диакритиками на базовый + диакритик
     .replace(/[\u0300-\u036f]/g, ''); // удаление диакритиков
+}
+
+const COMPANY_EXCLUDE_WORDS = new Set([
+  'group',
+  'ltd',
+  'limited',
+  'corporation',
+  'corp',
+  'inc',
+  'co',
+  'company',
+  'plc',
+  'llc',
+  'sa',
+  'gmbh',
+  'ag',
+  'pte',
+  'pte.',
+  'pty',
+]);
+
+function getCompanyVariants(companyName, email = '') {
+  if (!companyName) return [];
+
+  // Обработка компании
+  const words = (companyName || '')
+    .split(/\s+/)
+    .map((w) => w.toLowerCase())
+    .filter((w) => w && !COMPANY_EXCLUDE_WORDS.has(w));
+
+  const variants = new Set();
+
+  if (words.length) {
+    // Полное название без служебных слов
+    variants.add(words.join(' '));
+
+    // Каждое значимое слово
+    words.forEach((word) => variants.add(word));
+
+    // Аббревиатура из первых букв
+    if (words.length > 1) {
+      const abbreviation = words.map((w) => w[0]).join('');
+      variants.add(abbreviation);
+    }
+  }
+
+  // Обработка email — выделяем домен между @ и первым .
+
+  const match = email.toLowerCase().match(/@([^.]+)\./);
+  if (match && match[1]) {
+    variants.add(match[1]);
+  }
+  const arr = Array.from(variants);
+  console.log('Паттерны:', arr);
+  return arr;
 }
