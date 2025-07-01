@@ -168,12 +168,18 @@ async function main() {
           });
 
           let solved = [];
-          let error = null;
 
           if (hasRecaptcha) {
-            const result = await solveAllRecaptchas(page);
-            solved = result.solved || [];
-            error = result.error || null;
+            const {
+              captchas = [],
+              solved: solvedCaptchas = [],
+              error = null,
+            } = await page.solveRecaptchas();
+            solved = solvedCaptchas;
+
+            if (error) {
+              console.error('Ошибка при решении капчи:', error);
+            }
           } else {
             console.log('Капча на странице не найдена');
             // Если капчи нет, считаем что "решено"
@@ -345,40 +351,4 @@ function normalizeString(str) {
     .toLowerCase()
     .normalize('NFD') // разложение символов с диакритиками на базовый + диакритик
     .replace(/[\u0300-\u036f]/g, ''); // удаление диакритиков
-}
-
-async function solveAllRecaptchas(page, maxAttempts = 3) {
-  let lastResult = { solved: [], error: null };
-
-  for (let i = 0; i < maxAttempts; i++) {
-    const {
-      captchas = [],
-      solved = [],
-      error = null,
-    } = await page.solveRecaptchas();
-
-    console.log(
-      `Попытка ${i + 1}: капч найдено ${captchas.length}, решено ${
-        solved.length
-      }`
-    );
-
-    lastResult = { solved, error };
-
-    if (captchas.length === 0) {
-      // Капч больше нет — выходим, возвращаем последний результат
-      return lastResult;
-    }
-
-    if (error) {
-      console.warn('Ошибка при решении капчи:', error);
-      break; // или можно попробовать еще раз
-    }
-
-    // Подождать, чтобы страница обновилась после решения капчи
-    await new Promise((r) => setTimeout(r, 3000));
-  }
-
-  // Возвращаем последний полученный результат (успех или ошибка)
-  return lastResult;
 }
