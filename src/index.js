@@ -104,6 +104,19 @@ async function main() {
     sheetTitle = await getSheetTitleById(listId);
     console.log('Название листа:', sheetTitle);
     let rowIndex = 2;
+    const browser = await puppeteer.launch({
+      headless: false,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+    );
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US,en;q=0.9',
+    });
+    await page.emulateTimezone('Europe/Kiev');
+    await page.setViewport({ width: 1366, height: 768 });
     while (true) {
       // Читаем данные с листа
       const data = await sheets.spreadsheets.values.get({
@@ -121,6 +134,7 @@ async function main() {
 
       console.log(rowObject);
       if (!rowObject.first_name || !rowObject.last_name) {
+        await browser.close();
         break;
       }
       if (!rowObject.prooflink && rowObject.prooflink.trim() == '') {
@@ -128,25 +142,23 @@ async function main() {
         const searchQuery = `site:linkedin.com/in ${rowObject.first_name} ${rowObject.last_name} ${rowObject.company}`;
         const encodedQuery = encodeURIComponent(searchQuery);
         const url = `https://www.google.com/search?q=${encodedQuery}`;
-        const browser = await puppeteer.launch({ headless: true });
-        const page = await browser.newPage();
-        await page.setUserAgent(
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
-        );
+
         try {
           await page.goto(url, {
             waitUntil: 'networkidle2',
           });
-
-          const { solved, error } = await page.solveRecaptchas();
+          await solveAllRecaptchas(page);
+          // const { solved, error } = await page.solveRecaptchas();
 
           if (solved.length) {
             console.log('Капчи успешно решены');
-            await page.waitForSelector('div[data-rpos="0"]');
+            await new Promise((r) => setTimeout(r, 1000));
             await page.screenshot({
               path: 'google_search.png',
               fullPage: true,
             });
+            await page.waitForSelector('div[data-rpos="0"]');
+
             const blockText = await parser(page, 'div[data-rpos="0"]');
 
             // Вызов проверки
@@ -230,11 +242,10 @@ async function main() {
             });
           }
         } finally {
-          await browser.close();
         }
       } else {
         rowIndex++;
-        await new Promise((r) => setTimeout(r, 500));
+        await new Promise((r) => setTimeout(r, 250));
       }
     }
   } catch (e) {
@@ -256,23 +267,38 @@ async function parser(page, selector) {
 }
 
 function checkBlockForPerson(text, person) {
-  const hasFirstName = text.includes(person.first_name.toLowerCase());
-  const hasLastName = text.includes(person.last_name.toLowerCase());
-  const hasCompany = text.includes(person.company.toLowerCase());
+  const blockText = text.toLowerCase();
 
-  console.log('\n Блок текста:');
-  console.log(text);
+  const firstName = person.first_name.trim().toLowerCase();
+  const lastName = person.last_name.trim().toLowerCase();
+  const company = person.company.trim().toLowerCase();
+  const title = person.title.trim().toLowerCase();
 
-  console.log('\n Результаты проверки:');
-  console.log('Имя найдено:', hasFirstName);
-  console.log('Фамилия найдена:', hasLastName);
-  console.log('Компания найдена:', hasCompany);
+  const hasNameVariants = checkNameVariantsInText(
+    blockText,
+    firstName,
+    lastName
+  );
 
-  if (hasFirstName && hasLastName && hasCompany) {
-    console.log('\n✅ Все данные найдены в блоке!');
+  // const hasFirstName = blockText.includes(firstName);
+  // const hasLastName = blockText.includes(lastName);
+  const hasCompany = blockText.includes(company);
+  const hasTitle = blockText.includes(title);
+
+  const allFound = hasNameVariants && hasCompany;
+
+  console.log('\nРезультаты проверки блока текста:');
+  console.log('hasNameVariants:', hasNameVariants);
+  // console.log('hasFirstName:', hasFirstName);
+  // console.log('hasLastName:', hasLastName);
+  console.log('hasCompany:', hasCompany);
+  console.log('Тайтл найден:', hasTitle);
+
+  if (allFound) {
+    console.log('\n✅ Найдено совпадение!');
     return true;
   } else {
-    console.log('\n❌ Не все данные найдены.');
+    console.log('\n❌ Совпадение не найдено.');
     return false;
   }
 }
@@ -293,4 +319,57 @@ async function getLinkFromBlock(page, selector) {
     console.error(`❌ Ошибка при получении ссылки: ${e.message}`);
     return null;
   }
+}
+
+function checkNameVariantsInText(text, firstName, lastName) {
+  const blockText = normalizeString(text.toLowerCase());
+  const fName = firstName.trim().toLowerCase();
+  const lName = lastName.trim().toLowerCase();
+
+  const firstInitial = fName.charAt(0);
+  const lastInitial = lName.charAt(0);
+
+  const nameVariants = [
+    `${fName} ${lName}`, // Laurent Prebende
+    `${fName} ${lastInitial}.`, // Laurent P.
+    `${firstInitial}. ${lName}`, // L. Prebende
+    `${firstInitial}. ${lastInitial}.`, // L. P.
+  ];
+
+  const found = nameVariants.some((variant) => blockText.includes(variant));
+
+  console.log('\n Проверка вариантов имени:');
+  console.log('Паттерны:', nameVariants);
+  console.log('Найдено:', found);
+
+  return found;
+}
+
+function normalizeString(str) {
+  return str
+    .toLowerCase()
+    .normalize('NFD') // разложение символов с диакритиками на базовый + диакритик
+    .replace(/[\u0300-\u036f]/g, ''); // удаление диакритиков
+}
+
+async function solveAllRecaptchas(page, maxAttempts = 3) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const { captchas, solved, error } = await page.solveRecaptchas();
+    console.log(
+      `Попытка ${i + 1}: капч найдено ${captchas.length}, решено ${
+        solved.length
+      }`
+    );
+    if (captchas.length === 0) {
+      // Капч больше нет — выходим
+      return true;
+    }
+    if (error) {
+      console.warn('Ошибка при решении капчи:', error);
+      break; // или попробуй ещё раз
+    }
+    // Подожди немного, чтобы страница успела обновиться после решения
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  return false; // капчи так и остались
 }
