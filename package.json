@@ -4,7 +4,9 @@
     "googleapis": "^150.0.1",
     "puppeteer": "^24.11.1",
     "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-click-and-wait": "^2.3.3",
     "puppeteer-extra-plugin-recaptcha": "^3.6.8",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "puppeteer-real-browser": "^1.4.2"
   }
 }

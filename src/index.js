@@ -1,8 +1,10 @@
 const readline = require('readline');
 const { google } = require('googleapis');
 const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+const { connect } = require('puppeteer-real-browser');
 const RecaptchaPlugin = require('puppeteer-extra-plugin-recaptcha');
+const ClickAndWaitPlugin = require('puppeteer-extra-plugin-click-and-wait');
 
 puppeteer.use(
   RecaptchaPlugin({
@@ -13,7 +15,7 @@ puppeteer.use(
     visualFeedback: true, // Подсветка капчи во время решения (опционально)
   })
 );
-
+puppeteer.use(ClickAndWaitPlugin());
 const KEYFILE = './my-nodejs-sheets-7b4c590c9ba6.json';
 
 const headers = [
@@ -32,8 +34,8 @@ const headers = [
   'date_engaged',
 ];
 
-const stealth = StealthPlugin();
-puppeteer.use(stealth);
+// const stealth = StealthPlugin();
+// puppeteer.use(stealth);
 
 function extractSpreadsheetId(url) {
   const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -104,11 +106,21 @@ async function main() {
     sheetTitle = await getSheetTitleById(listId);
     console.log('Название листа:', sheetTitle);
     let rowIndex = 2;
-    const browser = await puppeteer.launch({
+    const { browser } = await connect({
+      args: ['--start-maximized'],
+      turnstile: true,
       headless: false,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      // disableXvfb: true,
+      customConfig: {},
+      connectOption: {
+        defaultViewport: null,
+      },
+      plugins: [require('puppeteer-extra-plugin-click-and-wait')()],
     });
-    const page = await browser.newPage();
+    const connectedBrowser = await puppeteer.connect({
+      browserWSEndpoint: browser.wsEndpoint(),
+    });
+    const page = await connectedBrowser.newPage();
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
     );
@@ -147,9 +159,26 @@ async function main() {
           await page.goto(url, {
             waitUntil: 'networkidle2',
           });
-          await solveAllRecaptchas(page);
-          // const { solved, error } = await page.solveRecaptchas();
+          await page.clickAndWaitForNavigation('body');
+          const hasRecaptcha = await page.evaluate(() => {
+            return (
+              !!document.querySelector('.g-recaptcha') ||
+              !!document.querySelector('iframe[src*="recaptcha"]')
+            );
+          });
 
+          let solved = [];
+          let error = null;
+
+          if (hasRecaptcha) {
+            const result = await solveAllRecaptchas(page);
+            solved = result.solved || [];
+            error = result.error || null;
+          } else {
+            console.log('Капча на странице не найдена');
+            // Если капчи нет, считаем что "решено"
+            solved = [true]; // Просто чтобы пройти проверку ниже
+          }
           if (solved.length) {
             console.log('Капчи успешно решены');
             await new Promise((r) => setTimeout(r, 1000));
@@ -186,45 +215,11 @@ async function main() {
               });
               rowIndex++;
             }
-          }
-
-          if (error) {
+          } else {
             console.error('Ошибка при решении капчи:', error);
           }
-          // Вводим поисковый запрос
 
-          // Получаем ссылки из результатов поиска
-          // const results = await page.$$eval(
-          //   'div[data-rpos="0"]',
-          //   (nodes, firstName, lastName) => {
-          //     return nodes
-          //       .map((node) => {
-          //         const linkEl = node.querySelector('a');
-          //         const titleEl = node.querySelector('h3');
-
-          //         if (linkEl && titleEl) {
-          //           const titleText = titleEl.innerText.trim().toLowerCase();
-          //           // Проверяем, есть ли имя и фамилия в заголовке (регистр не важен)
-          //           if (
-          //             titleText.includes(firstName.toLowerCase()) &&
-          //             titleText.includes(lastName.toLowerCase())
-          //           ) {
-          //             return {
-          //               title: titleEl.innerText.trim(),
-          //               url: linkEl.href,
-          //             };
-          //           }
-          //         }
-          //         return null;
-          //       })
-          //       .filter((item) => item !== null);
-          //   },
-          //   rowObject.first_name,
-          //   rowObject.last_name
-          // );
-
-          // console.log('Результаты, содержащие имя и фамилию:');
-          // console.log(results);
+          // const { solved, error } = await page.solveRecaptchas();
         } catch (error) {
           console.error('Ошибка при поиске в Google:', error.message);
           if (
@@ -353,23 +348,37 @@ function normalizeString(str) {
 }
 
 async function solveAllRecaptchas(page, maxAttempts = 3) {
+  let lastResult = { solved: [], error: null };
+
   for (let i = 0; i < maxAttempts; i++) {
-    const { captchas, solved, error } = await page.solveRecaptchas();
+    const {
+      captchas = [],
+      solved = [],
+      error = null,
+    } = await page.solveRecaptchas();
+
     console.log(
       `Попытка ${i + 1}: капч найдено ${captchas.length}, решено ${
         solved.length
       }`
     );
+
+    lastResult = { solved, error };
+
     if (captchas.length === 0) {
-      // Капч больше нет — выходим
-      return true;
+      // Капч больше нет — выходим, возвращаем последний результат
+      return lastResult;
     }
+
     if (error) {
       console.warn('Ошибка при решении капчи:', error);
-      break; // или попробуй ещё раз
+      break; // или можно попробовать еще раз
     }
-    // Подожди немного, чтобы страница успела обновиться после решения
+
+    // Подождать, чтобы страница обновилась после решения капчи
     await new Promise((r) => setTimeout(r, 3000));
   }
-  return false; // капчи так и остались
+
+  // Возвращаем последний полученный результат (успех или ошибка)
+  return lastResult;
 }
