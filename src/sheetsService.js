@@ -41,7 +41,7 @@ export function getSheetsClient() {
   }
 }
 
-export async function getSheetTitleById(sheets, sheetId) {
+export async function getSheetTitleById(sheets, spreadsheetId, sheetId) {
   try {
     const res = await sheets.spreadsheets.get({ spreadsheetId });
     const sheet = res.data.sheets.find((s) => s.properties.sheetId === sheetId);
@@ -84,10 +84,15 @@ function columnIndexToLetter(index) {
   return letter;
 }
 
-export async function normalizeSheetStructure(sheets, sheetId, sheetTitle) {
+export async function normalizeSheetStructure(
+  sheets,
+  spreadsheetId,
+  sheetId,
+  sheetTitle
+) {
   try {
     const res = await sheets.spreadsheets.values.get({
-      sheetId,
+      spreadsheetId,
       range: `${sheetTitle}`,
     });
     const rows = res.data.values || [];
@@ -100,7 +105,7 @@ export async function normalizeSheetStructure(sheets, sheetId, sheetTitle) {
 
       if (!currentHeaders.includes(colName)) {
         await sheets.spreadsheets.batchUpdate({
-          sheetId,
+          spreadsheetId,
           requestBody: {
             requests: [
               {
@@ -119,7 +124,7 @@ export async function normalizeSheetStructure(sheets, sheetId, sheetTitle) {
         });
 
         await sheets.spreadsheets.values.update({
-          sheetId,
+          spreadsheetId,
           range: `${sheetTitle}!${columnIndexToLetter(i)}1`,
           valueInputOption: 'RAW',
           requestBody: {
@@ -137,7 +142,7 @@ export async function normalizeSheetStructure(sheets, sheetId, sheetTitle) {
     }
 
     await sheets.spreadsheets.values.update({
-      sheetId,
+      spreadsheetId,
       range: `${sheetTitle}!A1`,
       valueInputOption: 'RAW',
       requestBody: {
@@ -178,7 +183,7 @@ export async function normalizeSheetStructure(sheets, sheetId, sheetTitle) {
 
     if (requests.length > 0) {
       await sheets.spreadsheets.batchUpdate({
-        sheetId,
+        spreadsheetId,
         requestBody: { requests },
       });
     }
@@ -192,10 +197,10 @@ export async function normalizeSheetStructure(sheets, sheetId, sheetTitle) {
   }
 }
 
-export async function processSheetData(sheets, sheetId, sheetTitle) {
+export async function processSheetData(sheets, spreadsheetId, sheetTitle) {
   try {
     const headerRes = await sheets.spreadsheets.values.get({
-      sheetId,
+      spreadsheetId,
       range: `${sheetTitle}!1:1`,
     });
     const headers = headerRes.data.values?.[0] || [];
@@ -209,7 +214,7 @@ export async function processSheetData(sheets, sheetId, sheetTitle) {
 
     const dataRange = `${sheetTitle}!I2:N`;
     const dataRes = await sheets.spreadsheets.values.get({
-      sheetId,
+      spreadsheetId,
       range: dataRange,
     });
     const rows = dataRes.data.values || [];

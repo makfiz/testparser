@@ -30,7 +30,7 @@ function extractSpreadsheetId(url) {
 }
 
 // Функция извлечения listId (gid) из ссылки
-function extractListId(url) {
+function extractSheetId(url) {
   // Ищем gid в параметрах ?gid= или #gid=
   const match = url.match(/[?&]gid=(\d+)/) || url.match(/#gid=(\d+)/);
   return match ? parseInt(match[1], 10) : null;
@@ -55,33 +55,33 @@ async function main() {
   const url = await askQuestion('Введи ссылку на Google Sheets: ');
 
   // const spreadsheetId = extractSpreadsheetId(url);
-  // const listId = extractListId(url);
+  // const sheetId = extractSheetId(url);
 
-  const spreadsheetId = '1d44yez4vxbQlKhCzjf3QRnY6X5RlFHT2qUkG8UdrAFE';
-  const listId = 1372950738;
+  const spreadsheetId = '180fh8cYh854ifmV37qqui9zkcl32LRRwsp7rtPgAGbs';
+  const sheetId = 1372950738;
 
   if (!spreadsheetId) {
     console.error('Не удалось извлечь Spreadsheet ID из ссылки.');
     process.exit(1);
   }
 
-  if (!listId) {
-    console.error('Не удалось извлечь listId (gid) из ссылки.');
+  if (!sheetId) {
+    console.error('Не удалось извлечь sheetId (gid) из ссылки.');
     process.exit(1);
   }
 
   console.log('spreadsheetId:', spreadsheetId);
-  console.log('listId (gid):', listId);
+  console.log('sheetId (gid):', sheetId);
 
   const sheets = await getSheetsClient();
   let sheetTitle;
 
   try {
-    sheetTitle = await getSheetTitleById(sheets, listId);
+    sheetTitle = await getSheetTitleById(sheets, spreadsheetId, sheetId);
     console.log('Название листа:', sheetTitle);
     let rowIndex = 2;
 
-    await normalizeSheetStructure(sheets, spreadsheetId, sheetTitle);
+    await normalizeSheetStructure(sheets, spreadsheetId, sheetId, sheetTitle);
     const lastColLetter = processSheetData(sheets, spreadsheetId, sheetTitle);
 
     let emptyRowCount = 0;
