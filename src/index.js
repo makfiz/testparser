@@ -55,11 +55,11 @@ function askQuestion(query) {
 async function main() {
   const url = await askQuestion('Введи ссылку на Google Sheets: ');
 
-  // const spreadsheetId = extractSpreadsheetId(url);
-  // const sheetId = extractSheetId(url);
+  const spreadsheetId = extractSpreadsheetId(url);
+  const sheetId = extractSheetId(url);
 
-  const spreadsheetId = '1d44yez4vxbQlKhCzjf3QRnY6X5RlFHT2qUkG8UdrAFE';
-  const sheetId = 384167586;
+  // const spreadsheetId = '1d44yez4vxbQlKhCzjf3QRnY6X5RlFHT2qUkG8UdrAFE';
+  // const sheetId = 384167586;
 
   if (!spreadsheetId) {
     console.error('Не удалось извлечь Spreadsheet ID из ссылки.');

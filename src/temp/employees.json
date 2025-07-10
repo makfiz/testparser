@@ -1,10 +1,4 @@
 {
-  "cordenpharma.com": {
-    "K": "1001-5000",
-    "L": "https://www.linkedin.com/company/corden-pharma-gmbh/about",
-    "M": "Pharmaceutical Manufacturing",
-    "N": "Biotech and Pharmaceuticals"
-  },
   "titanamerica.com": {
     "K": "1001-5000",
     "L": "https://www.linkedin.com/company/titan-america/about",
@@ -166,5 +160,11 @@
     "L": "https://www.linkedin.com/company/cnh/about",
     "M": "Machinery Manufacturing",
     "N": "Manufacturing"
+  },
+  "cordenpharma.com": {
+    "K": "1001-5000",
+    "L": "https://www.linkedin.com/company/corden-pharma-gmbh/about",
+    "M": "Pharmaceutical Manufacturing",
+    "N": "Biotech and Pharmaceuticals"
   }
 }

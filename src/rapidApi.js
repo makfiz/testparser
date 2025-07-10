@@ -1,9 +1,7 @@
 import axios from 'axios';
-import dotenv from 'dotenv';
-dotenv.config();
 
-const rapidapiKey = process.env.X_RAPIDAPI_KEY;
-console.log(rapidapiKey);
+const rapidapiKey = '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07';
+
 export async function fetchGoogleFullProfiles(person) {
   const options = {
     method: 'POST',
