@@ -26,7 +26,7 @@ import axios from 'axios';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const KEYFILE = path.join(__dirname, './my-nodejs-sheets-7b4c590c9ba6.json');
+const KEYFILE = path.join(__dirname, './my-nodejs-sheets-c019fa61949c.json');
 
 const requiredColumns = [
   'first_name',
