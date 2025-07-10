@@ -1,0 +1,32 @@
+{
+  "alixpartners.com": {
+    "K": "1001-5000",
+    "L": "https://www.linkedin.com/company/alixpartners/about",
+    "M": "Business Consulting and Services",
+    "N": "Corporate Services"
+  },
+  "connectwise.com": {
+    "K": "1001-5000",
+    "L": "https://www.linkedin.com/company/connectwise//about",
+    "M": "Software Development",
+    "N": "Computers and Technology"
+  },
+  "cbh.com": {
+    "K": "1001-5000",
+    "L": "https://www.linkedin.com/company/cherrybekaert/about",
+    "M": "Accounting",
+    "N": "Finance"
+  },
+  "cedrebeaune.com": {
+    "K": "11-50",
+    "L": "https://www.linkedin.com/company/cedrebeaune/about",
+    "M": "Hospitality",
+    "N": "Travel / Hospitality / Entertainment"
+  },
+  "te.eg": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/telecom-egypt/about",
+    "M": "Telecommunications",
+    "N": "Telecommunications"
+  }
+}

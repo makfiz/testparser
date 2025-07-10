@@ -1,12 +1,18 @@
 {
   "description": "",
+  "scripts": {
+    "start": "node src/index.js"
+  },
   "dependencies": {
+    "axios": "^1.10.0",
     "googleapis": "^150.0.1",
     "puppeteer": "^24.11.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-click-and-wait": "^2.3.3",
     "puppeteer-extra-plugin-recaptcha": "^3.6.8",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "puppeteer-real-browser": "^1.4.2"
-  }
+    "puppeteer-real-browser": "^1.4.2",
+    "string-similarity": "^4.0.4"
+  },
+  "type": "module"
 }
