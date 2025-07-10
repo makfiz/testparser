@@ -1,5 +1,7 @@
 import readline from 'readline';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { google } from 'googleapis';
 // import puppeteer from 'puppeteer-extra';
 import findMatchingIndustry from './dictionaries/industries.js';
@@ -21,19 +23,25 @@ import axios from 'axios';
 //   })
 // );
 // puppeteer.use(ClickAndWaitPlugin());
-const KEYFILE = './my-nodejs-sheets-7b4c590c9ba6.json';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const headers = [
+const KEYFILE = path.join(__dirname, './my-nodejs-sheets-7b4c590c9ba6.json');
+
+const requiredColumns = [
   'first_name',
   'last_name',
   'company',
   'title',
   'prooflink',
+  'location',
+  'status',
   'ov_date',
   'email',
   'phone',
   'employees',
   'employees_prooflink',
+  'subindustry',
   'industry',
   'asset',
   'date_engaged',
@@ -72,11 +80,11 @@ function askQuestion(query) {
 async function main() {
   const url = await askQuestion('Введи ссылку на Google Sheets: ');
 
-  const spreadsheetId = extractSpreadsheetId(url);
-  const listId = extractListId(url);
+  // const spreadsheetId = extractSpreadsheetId(url);
+  // const listId = extractListId(url);
 
-  // const spreadsheetId = '1TbF7bauYHVtOp45XUQICGY1uv-L9OvyrBdvLpNObnA4';
-  // const listId = 164967304;
+  const spreadsheetId = '1d44yez4vxbQlKhCzjf3QRnY6X5RlFHT2qUkG8UdrAFE';
+  const listId = 384167586;
 
   if (!spreadsheetId) {
     console.error('Не удалось извлечь Spreadsheet ID из ссылки.');
@@ -144,25 +152,6 @@ async function main() {
     // });
 
     ////////////////////////////////////////////////////puppetr end
-
-    const requiredColumns = [
-      'first_name',
-      'last_name',
-      'company',
-      'title',
-      'prooflink',
-      'location',
-      'status',
-      'ov_date',
-      'email',
-      'phone',
-      'employees',
-      'employees_prooflink',
-      'subindustry',
-      'industry',
-      'asset',
-      'date_engaged',
-    ];
 
     await normalizeSheetStructure(
       sheets,
@@ -379,13 +368,10 @@ async function main() {
     });
 
     // Записываем в файл result.json в текущей папке
-    fs.writeFileSync(
-      './temp/employees.json',
-      JSON.stringify(result, null, 2),
-      'utf-8'
-    );
+    const employeesPath = path.join(__dirname, './temp/employees.json');
 
-    console.log('JSON сохранён в result.json');
+    fs.writeFileSync(employeesPath, JSON.stringify(result, null, 2), 'utf-8');
+
     let emptyRowCount = 0;
     while (true) {
       // Читаем данные с листа
@@ -472,37 +458,38 @@ async function main() {
               // });
               ////////////////////// тест
               ////////////////////// old company math logic /////////////////////
-              const companyVariants = getCompanyVariants(
-                rowObject.company,
-                rowObject.email.trim()
-              ).map((v) => normalizeString(v)); // нормализуем сразу все варианты
+              // const companyVariants = getCompanyVariants(
+              //   rowObject.company,
+              //   rowObject.email.trim()
+              // ).map((v) => normalizeString(v)); // нормализуем сразу все варианты
 
-              const companyArr = [];
+              // const companyArr = [];
 
-              const matchedExperience = experiences.find((exp) => {
-                if (!exp.company) return false;
+              // const matchedExperience = experiences.find((exp) => {
+              //   if (!exp.company) return false;
 
-                companyArr.push(exp.company);
+              //   companyArr.push(exp.company);
+              // });
 
-                const expCompanyLower = normalizeString(
-                  exp.company.toLowerCase()
-                );
+              //   const expCompanyLower = normalizeString(
+              //     exp.company.toLowerCase()
+              //   );
 
-                // Проверяем совпадения по границам слова
-                return companyVariants.some((variant) => {
-                  if (variant.length < 3) return false; // игнорируем слишком короткие варианты
+              //   // Проверяем совпадения по границам слова
+              //   return companyVariants.some((variant) => {
+              //     if (variant.length < 3) return false; // игнорируем слишком короткие варианты
 
-                  // Экранируем спецсимволы для RegExp
-                  const escapedVariant = variant.replace(
-                    /[.*+?^${}()|[\]\\]/g,
-                    '\\$&'
-                  );
+              //     // Экранируем спецсимволы для RegExp
+              //     const escapedVariant = variant.replace(
+              //       /[.*+?^${}()|[\]\\]/g,
+              //       '\\$&'
+              //     );
 
-                  const regex = new RegExp(`\\b${escapedVariant}\\b`, 'i');
+              //     const regex = new RegExp(`\\b${escapedVariant}\\b`, 'i');
 
-                  return regex.test(expCompanyLower);
-                });
-              });
+              //     return regex.test(expCompanyLower);
+              //   });
+              // });
               ////////////////////////////////////// old company math logic
 
               const firstName = rowObject.first_name.trim().toLowerCase();
@@ -515,6 +502,13 @@ async function main() {
               );
 
               // console.log()
+              const companyArr = [];
+
+              experiences.forEach((exp) => {
+                if (exp.company) {
+                  companyArr.push(exp.company);
+                }
+              });
               if (hasNameVariants.status) {
                 if (rowObject.phone) {
                   await sheets.spreadsheets.values.update({
@@ -542,11 +536,13 @@ async function main() {
                     ],
                   },
                 });
-                // console.log('bestMatch', bestMatch);
 
+                const { company, email } = rowObject;
                 const [matchedExperience, matchType, index] =
-                  findMatchingCompany(companyName, experiences, emailDomain);
-                if (matchedExperience) {
+                  findMatchingCompany(company, experiences, email);
+                console.log('Result:', matchedExperience, matchType, index);
+
+                if (matchedExperience && matchedExperience != 'no match') {
                   // const firstMatch = matchedExperiences[0];
                   console.log('matchedExperience', matchedExperience);
                   if (matchedExperience.is_current) {
@@ -559,28 +555,21 @@ async function main() {
                         values: [[matchedExperience.title]],
                       },
                     });
-                    const matchedExperienceCompanyLower = (
-                      normalizeString(matchedExperience.company) || ''
-                    ).toLowerCase();
-                    const bestMatchCompanyLower = (
-                      normalizeString(bestMatch.company) || ''
-                    ).toLowerCase();
-
-                    const isMatchedCompanyValid = companyVariants.some(
-                      (variant) =>
-                        matchedExperienceCompanyLower.includes(
-                          variant.toLowerCase()
-                        )
+                    const [matched, matchType, index] = findMatchingCompany(
+                      bestMatch.company,
+                      [matchedExperience],
+                      email
                     );
-
-                    const isBestMatchCompanyValid = companyVariants.some(
-                      (variant) =>
-                        bestMatchCompanyLower.includes(variant.toLowerCase())
+                    console.log(
+                      'matched Result header comp. and expirence comp. :',
+                      matched,
+                      matchType,
+                      index
                     );
 
                     if (
-                      isMatchedCompanyValid &&
-                      isBestMatchCompanyValid &&
+                      matched &&
+                      matched != 'no match' &&
                       bestMatch.company_employee_count &&
                       bestMatch.company_linkedin_url &&
                       bestMatch.company_industry
@@ -606,10 +595,7 @@ async function main() {
                           ],
                         },
                       });
-                    } else if (
-                      isMatchedCompanyValid &&
-                      !isBestMatchCompanyValid
-                    ) {
+                    } else if (matched == 'no match') {
                       console.log(
                         'Компания в Rapid совпадает с companyVariants и company info отутсвует'
                       );
@@ -635,34 +621,46 @@ async function main() {
                           },
                         });
                       } else {
-                        const comp = await fetchCompanyDataByDomain(
+                        const compData = await fetchCompanyDataByDomain(
                           rowObject.email
                         );
-                        const companyLower = (
-                          comp.company_name || ''
-                        ).toLowerCase();
-                        const isCompanyMatched = companyVariants.some(
-                          (variant) =>
-                            companyLower.includes(variant.toLowerCase())
-                        );
-                        console.log('isCompanyMatched', isCompanyMatched);
-                        if (isCompanyMatched) {
-                          const ind = findMatchingIndustry(comp.industries[0]);
-                          await sheets.spreadsheets.values.update({
-                            spreadsheetId,
-                            range: `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
-                            valueInputOption: 'RAW',
-                            requestBody: {
-                              values: [
-                                [
-                                  comp.employee_range,
-                                  `${comp.linkedin_url}/about`,
-                                  comp.industries[0],
-                                  ind,
+                        if (compData) {
+                          const {
+                            company_name,
+                            employee_range,
+                            linkedin_url,
+                            industries,
+                          } = compData;
+                          const [matched, matchType, index] =
+                            findMatchingCompany(
+                              company,
+                              [{ company: company_name }],
+                              email
+                            );
+                          console.log(
+                            'matched Result header comp. and expirence comp. :',
+                            matched,
+                            matchType,
+                            index
+                          );
+                          if (matched && matched != 'no match') {
+                            const ind = findMatchingIndustry(industries[0]);
+                            await sheets.spreadsheets.values.update({
+                              spreadsheetId,
+                              range: `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
+                              valueInputOption: 'RAW',
+                              requestBody: {
+                                values: [
+                                  [
+                                    employee_range,
+                                    `${linkedin_url}/about`,
+                                    industries[0],
+                                    ind,
+                                  ],
                                 ],
-                              ],
-                            },
-                          });
+                              },
+                            });
+                          }
                         }
                       }
                     }
@@ -880,16 +878,16 @@ async function main() {
 
 main();
 
-async function parser(page, selector) {
-  try {
-    await page.waitForSelector(selector);
-    const text = await page.$eval(selector, (el) => el.innerText.toLowerCase());
-    return text;
-  } catch (e) {
-    console.error(`❌ Ошибка при парсинге блока: ${e.message}`);
-    return '';
-  }
-}
+// async function parser(page, selector) {
+//   try {
+//     await page.waitForSelector(selector);
+//     const text = await page.$eval(selector, (el) => el.innerText.toLowerCase());
+//     return text;
+//   } catch (e) {
+//     console.error(`❌ Ошибка при парсинге блока: ${e.message}`);
+//     return '';
+//   }
+// }
 
 // function checkBlockForPerson(text, person) {
 //   const blockText = text.toLowerCase();
@@ -1036,120 +1034,103 @@ function normalizeString(str) {
     .replace(/[\u0300-\u036f]/g, ''); // удаление диакритиков
 }
 
-const COMPANY_EXCLUDE_WORDS = new Set([
-  'group',
-  'ltd',
-  'limited',
-  'corporation',
-  'corp',
-  'inc',
-  'co',
-  'company',
-  'plc',
-  'llc',
-  'sa',
-  'gmbh',
-  'ag',
-  'pte',
-  'pte.',
-  'pty',
-  'holdings',
-]);
+// const COMPANY_EXCLUDE_WORDS = new Set([
+//   'group',
+//   'ltd',
+//   'limited',
+//   'corporation',
+//   'corp',
+//   'inc',
+//   'co',
+//   'company',
+//   'plc',
+//   'llc',
+//   'sa',
+//   'gmbh',
+//   'ag',
+//   'pte',
+//   'pte.',
+//   'pty',
+//   'holdings',
+// ]);
 
-const COMPANY_ABBR_DICTIONARY = {
-  mbc: 'middle east broadcasting',
-  bbc: 'british broadcasting',
-  cnn: 'cable news network',
-  cbh: 'Cherry Bekaert Advisory',
-  bcbs: 'Blue Cross and Blue Shield of Nebraska',
-};
+// const COMPANY_ABBR_DICTIONARY = {
+//   mbc: 'middle east broadcasting',
+//   bbc: 'british broadcasting',
+//   cnn: 'cable news network',
+//   cbh: 'Cherry Bekaert Advisory',
+//   bcbs: 'Blue Cross and Blue Shield of Nebraska',
+// };
 
-function getCompanyVariants(companyName, email = '') {
-  if (!companyName) return [];
-  console.log('\nПроверка вариантов company-name:');
-  const words = (companyName || '')
-    .split(/\s+/)
-    .map((w) => w.toLowerCase())
-    .filter((w) => w && !COMPANY_EXCLUDE_WORDS.has(w)); // служебные слова исключаем
+// function getCompanyVariants(companyName, email = '') {
+//   if (!companyName) return [];
+//   console.log('\nПроверка вариантов company-name:');
+//   const words = (companyName || '')
+//     .split(/\s+/)
+//     .map((w) => w.toLowerCase())
+//     .filter((w) => w && !COMPANY_EXCLUDE_WORDS.has(w)); // служебные слова исключаем
 
-  const variants = new Set();
-  console.log('words', words);
-  if (words.length) {
-    variants.add(companyName.toLowerCase());
-    variants.add(normalizeString(companyName.toLowerCase()));
+//   const variants = new Set();
+//   console.log('words', words);
+//   if (words.length) {
+//     variants.add(companyName.toLowerCase());
+//     variants.add(normalizeString(companyName.toLowerCase()));
 
-    variants.add(words.join(' '));
+//     variants.add(words.join(' '));
 
-    // Аббревиатура
-    if (words.length > 1) {
-      // console.log('abr staertr');
-      const abbreviation = words.map((w) => w[0]).join('');
-      variants.add(abbreviation);
-      // console.log('abbreviation', abbreviation);
+//     // Аббревиатура
+//     if (words.length > 1) {
+//       // console.log('abr staertr');
+//       const abbreviation = words.map((w) => w[0]).join('');
+//       variants.add(abbreviation);
+//       // console.log('abbreviation', abbreviation);
 
-      const expansion = COMPANY_ABBR_DICTIONARY[abbreviation];
-      // console.log('expansion', expansion);
-      if (expansion) {
-        variants.add(expansion);
-      }
-    } else {
-      const expansion = COMPANY_ABBR_DICTIONARY[words[0]];
-      // console.log('expansion', expansion);
-      if (expansion) {
-        variants.add(expansion);
-      }
-    }
-  }
-  // Комбинации из 2 и 3 слов
-  for (let i = 0; i < words.length; i++) {
-    for (let j = i + 1; j < Math.min(words.length, i + 3); j++) {
-      const combo = words.slice(i, j + 1).join(' ');
-      variants.add(combo);
-    }
-  }
+//       const expansion = COMPANY_ABBR_DICTIONARY[abbreviation];
+//       // console.log('expansion', expansion);
+//       if (expansion) {
+//         variants.add(expansion);
+//       }
+//     } else {
+//       const expansion = COMPANY_ABBR_DICTIONARY[words[0]];
+//       // console.log('expansion', expansion);
+//       if (expansion) {
+//         variants.add(expansion);
+//       }
+//     }
+//   }
+//   // Комбинации из 2 и 3 слов
+//   for (let i = 0; i < words.length; i++) {
+//     for (let j = i + 1; j < Math.min(words.length, i + 3); j++) {
+//       const combo = words.slice(i, j + 1).join(' ');
+//       variants.add(combo);
+//     }
+//   }
 
-  // Извлечение домена из email (например, company из user@company.com)
-  const match = email.toLowerCase().match(/@([^.]+)\./);
-  if (match && match[1]) {
-    const domain = match[1];
-    if (COMPANY_ABBR_DICTIONARY[domain]) {
-      variants.add(COMPANY_ABBR_DICTIONARY[domain]);
-    }
-    if (domain.length < 3) {
-      variants.add(`at ${domain}`);
-    } else {
-      variants.add(domain);
-    }
-  }
-  const arr = Array.from(variants);
-  console.log('Паттерны:', arr);
-  return arr;
-}
+//   // Извлечение домена из email (например, company из user@company.com)
+//   const match = email.toLowerCase().match(/@([^.]+)\./);
+//   if (match && match[1]) {
+//     const domain = match[1];
+//     if (COMPANY_ABBR_DICTIONARY[domain]) {
+//       variants.add(COMPANY_ABBR_DICTIONARY[domain]);
+//     }
+//     if (domain.length < 3) {
+//       variants.add(`at ${domain}`);
+//     } else {
+//       variants.add(domain);
+//     }
+//   }
+//   const arr = Array.from(variants);
+//   console.log('Паттерны:', arr);
+//   return arr;
+// }
 
 async function fetchGoogleFullProfiles(person) {
-  // const options = {
-  //   method: 'POST',
-  //   url: 'https://web-scraping-api2.p.rapidapi.com/google-full-profiles',
-  //   headers: {
-  //     'x-rapidapi-key': '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07',
-  //     'x-rapidapi-host': 'web-scraping-api2.p.rapidapi.com',
-  //     'Content-Type': 'application/json',
-  //   },
-  //   data: {
-  //     name: `${person.first_name} ${person.last_name}`,
-  //     company_name: `${person.company}`,
-  //     job_title: '',
-  //     location: '',
-  //     keywords: '',
-  //     limit: 1,
-  //   },
-  // };
   const options = {
     method: 'POST',
-    url: 'https://fresh-linkedin-profile-data.p.rapidapi.com/google-full-profiles',
+    url: 'https://web-scraping-api2.p.rapidapi.com/google-full-profiles',
     headers: {
       'x-rapidapi-key': '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07',
-      'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
+      'x-rapidapi-host': 'web-scraping-api2.p.rapidapi.com',
       'Content-Type': 'application/json',
     },
     data: {
@@ -1161,6 +1142,23 @@ async function fetchGoogleFullProfiles(person) {
       limit: 1,
     },
   };
+  // const options = {
+  //   method: 'POST',
+  //   url: 'https://fresh-linkedin-profile-data.p.rapidapi.com/google-full-profiles',
+  //   headers: {
+  //     'x-rapidapi-key': '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07',
+  //     'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
+  //     'Content-Type': 'application/json',
+  //   },
+  //   data: {
+  //     name: `${person.first_name} ${person.last_name}`,
+  //     company_name: `${person.company}`,
+  //     job_title: '',
+  //     location: '',
+  //     keywords: '',
+  //     limit: 1,
+  //   },
+  // };
   // console.log(options);
   try {
     const response = await axios.request(options);
@@ -1178,28 +1176,28 @@ async function fetchGoogleFullProfiles(person) {
 
 async function fetchCompanyDataByDomain(email) {
   const domain = (/@(.+)$/.exec(email.toLowerCase()) || [])[1];
-  // const options = {
-  //   method: 'GET',
-  //   url: 'https://web-scraping-api2.p.rapidapi.com/get-company-by-domain',
-  //   params: {
-  //     domain: domain,
-  //   },
-  //   headers: {
-  //     'x-rapidapi-key': '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07',
-  //     'x-rapidapi-host': 'web-scraping-api2.p.rapidapi.com',
-  //   },
-  // };
   const options = {
     method: 'GET',
-    url: 'https://fresh-linkedin-profile-data.p.rapidapi.com/get-company-by-domain',
+    url: 'https://web-scraping-api2.p.rapidapi.com/get-company-by-domain',
     params: {
       domain: domain,
     },
     headers: {
       'x-rapidapi-key': '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07',
-      'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
+      'x-rapidapi-host': 'web-scraping-api2.p.rapidapi.com',
     },
   };
+  // const options = {
+  //   method: 'GET',
+  //   url: 'https://fresh-linkedin-profile-data.p.rapidapi.com/get-company-by-domain',
+  //   params: {
+  //     domain: domain,
+  //   },
+  //   headers: {
+  //     'x-rapidapi-key': '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07',
+  //     'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
+  //   },
+  // };
   // console.log(options);
   try {
     const response = await axios.request(options);

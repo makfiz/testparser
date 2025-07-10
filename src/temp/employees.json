@@ -1,32 +1,158 @@
 {
-  "alixpartners.com": {
-    "K": "1001-5000",
-    "L": "https://www.linkedin.com/company/alixpartners/about",
-    "M": "Business Consulting and Services",
-    "N": "Corporate Services"
+  "visa.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/visa/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
   },
-  "connectwise.com": {
+  "vanguard.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/vanguard/about",
+    "M": "Financial Services",
+    "N": "Finance"
+  },
+  "interpublic.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/ipg/about",
+    "M": "Advertising Services",
+    "N": "Advertising / Marketing"
+  },
+  "dropbox.com": {
     "K": "1001-5000",
-    "L": "https://www.linkedin.com/company/connectwise//about",
+    "L": "https://www.linkedin.com/company/dropbox/about",
     "M": "Software Development",
     "N": "Computers and Technology"
   },
-  "cbh.com": {
+  "hp.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/hp/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "hpe.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/hewlett-packard-enterprise/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "amwins.com": {
+    "K": "5001-10000",
+    "L": "https://www.linkedin.com/company/amwins-group/about",
+    "M": "Insurance",
+    "N": "Insurance"
+  },
+  "coronishealth.com": {
+    "K": "5001-10000",
+    "L": "https://www.linkedin.com/company/coronishealth/about",
+    "M": "Hospitals and Health Care",
+    "N": "Healthcare / Medical"
+  },
+  "te.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/te-connectivity/about",
+    "M": "Appliances, Electrical, and Electronics Manufacturing",
+    "N": "Manufacturing"
+  },
+  "progressive.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/progressive-insurance/about",
+    "M": "Insurance",
+    "N": "Insurance"
+  },
+  "intuit.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/intuit/about",
+    "M": "Software Development",
+    "N": "Computers and Technology"
+  },
+  "cnh.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/cnh/about",
+    "M": "Machinery Manufacturing",
+    "N": "Manufacturing"
+  },
+  "titanamerica.com": {
     "K": "1001-5000",
-    "L": "https://www.linkedin.com/company/cherrybekaert/about",
-    "M": "Accounting",
+    "L": "https://www.linkedin.com/company/titan-america/about",
+    "M": "Wholesale Building Materials",
+    "N": "Retail and Consumer Goods"
+  },
+  "agreliantgenetics.com": {
+    "K": "501-1000",
+    "L": "https://www.linkedin.com/company/agreliant-genetics/about",
+    "M": "Biotechnology Research",
+    "N": "Biotech and Pharmaceuticals"
+  },
+  "qvc.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/qvc-international/about",
+    "M": "Retail",
+    "N": "Retail and Consumer Goods"
+  },
+  "casper.com": {
+    "K": "201-500",
+    "L": "https://www.linkedin.com/company/casper/about",
+    "M": "Retail",
+    "N": "Retail and Consumer Goods"
+  },
+  "integralads.com": {
+    "K": "501-1000",
+    "L": "https://www.linkedin.com/company/integralads/about",
+    "M": "Software Development",
+    "N": "Computers and Technology"
+  },
+  "jmsmucker.com": {
+    "K": "5001-10000",
+    "L": "https://www.linkedin.com/company/the-jm-smucker-co/about",
+    "M": "Manufacturing",
+    "N": "Manufacturing"
+  },
+  "datastax.com": {
+    "K": "501-1000",
+    "L": "https://www.linkedin.com/company/datastax/about",
+    "M": "IT System Data Services",
+    "N": "Computers and Technology"
+  },
+  "golden1.com": {
+    "K": "1001-5000",
+    "L": "https://www.linkedin.com/company/golden1creditunion/about",
+    "M": "Banking",
     "N": "Finance"
   },
-  "cedrebeaune.com": {
-    "K": "11-50",
-    "L": "https://www.linkedin.com/company/cedrebeaune/about",
-    "M": "Hospitality",
-    "N": "Travel / Hospitality / Entertainment"
+  "robinhood.com": {
+    "K": "1001-5000",
+    "L": "https://www.linkedin.com/company/robinhood/about",
+    "M": "Financial Services",
+    "N": "Finance"
   },
-  "te.eg": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/telecom-egypt/about",
-    "M": "Telecommunications",
-    "N": "Telecommunications"
+  "usfalcon.com": {
+    "K": "201-500",
+    "L": "https://www.linkedin.com/company/usfalcon/about",
+    "M": "Defense and Space Manufacturing",
+    "N": "Aerospace / Aviation"
+  },
+  "lyft.com": {
+    "K": "5001-10000",
+    "L": "https://www.linkedin.com/company/lyft/about",
+    "M": "Ground Passenger Transportation",
+    "N": "Transportation and Logistics"
+  },
+  "nrpgroup.com": {
+    "K": "501-1000",
+    "L": "https://www.linkedin.com/company/the-nrp-group-llc/about",
+    "M": "Real Estate",
+    "N": "Real Estate"
+  },
+  "surescripts.com": {
+    "K": "501-1000",
+    "L": "https://www.linkedin.com/company/surescripts-llc/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "cordenpharma.com": {
+    "K": "1001-5000",
+    "L": "https://www.linkedin.com/company/corden-pharma-gmbh/about",
+    "M": "Pharmaceutical Manufacturing",
+    "N": "Biotech and Pharmaceuticals"
   }
 }

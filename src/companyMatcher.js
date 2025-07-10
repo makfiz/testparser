@@ -1,3 +1,10 @@
+const COMPANY_ABBR_DICTIONARY = {
+  mbc: 'middle east broadcasting',
+  bbc: 'british broadcasting',
+  cnn: 'cable news network',
+  cbh: 'Cherry Bekaert Advisory',
+  bcbs: 'Blue Cross and Blue Shield of Nebraska',
+};
 const IGNORE_TERMS = [
   'llc',
   'inc',
@@ -46,7 +53,9 @@ function normalizeText(text) {
 // --- Clean company name into array of words ---
 function cleanCompanyName(companyName) {
   const normalizedName = normalizeText(companyName);
-  let cleanedName = normalizedName.replace(/[^a-zA-Z\s&]/g, '').trim();
+  let cleanedName = normalizedName.replace(/-/g, ' ');
+  console.log('cleanedName', cleanedName);
+  cleanedName = normalizedName.replace(/[^a-zA-Z\s&]/g, '').trim();
 
   const ignorePattern = new RegExp(
     `\\b(?:${IGNORE_TERMS.map((term) =>
@@ -63,8 +72,14 @@ function cleanCompanyName(companyName) {
 // --- Alternative cleaner to produce lower-case words ---
 function cleanCompanyNameForWords(companyName) {
   const normalizedName = normalizeText(companyName);
-  let cleanedName = normalizedName.replace(/[^\w\s'&]/g, '').trim();
 
+  // заменяем дефисы на пробелы
+  let cleanedName = normalizedName.replace(/-/g, ' ');
+
+  // убираем всё, кроме букв, цифр, пробелов и апострофа
+  cleanedName = cleanedName.replace(/[^\w\s']/g, '').trim();
+
+  // убираем слова из IGNORE_TERMS
   const ignorePattern = new RegExp(
     `\\b(?:${IGNORE_TERMS.map((term) =>
       term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -73,7 +88,10 @@ function cleanCompanyNameForWords(companyName) {
   );
   cleanedName = cleanedName.replace(ignorePattern, '').trim();
 
-  const words = cleanedName.toLowerCase().split(/\s+/);
+  // приводим к одному пробелу подряд
+  cleanedName = cleanedName.replace(/\s+/g, ' ');
+
+  const words = cleanedName.toLowerCase().split(' ');
   return words.filter(Boolean);
 }
 
@@ -177,7 +195,7 @@ export default function findMatchingCompany(
   experiences,
   emailDomain,
   threshold = 0.3,
-  abbrThreshold = 0.8
+  abbrThreshold = 0.7
 ) {
   const companyCleaned = cleanCompanyName(companyName);
 
@@ -260,14 +278,51 @@ export default function findMatchingCompany(
       return [bestExperience, 'abbr_match', bestIdx];
     }
   }
+  // --- Abbreviation dictionary matching ---
+  for (const [abbr, fullName] of Object.entries(COMPANY_ABBR_DICTIONARY)) {
+    const companyAbbr = getAbbreviation(companyCleaned);
 
+    if (abbr.toLowerCase() === companyAbbr.toLowerCase()) {
+      console.log(
+        `  ▶ Found abbreviation "${abbr}" in dictionary. Full name: "${fullName}"`
+      );
+
+      // Clean the full name from dictionary
+      const dictCleanedWords = cleanCompanyNameForWords(fullName);
+
+      for (let i = 0; i < experiences.length; i++) {
+        const experience = experiences[i];
+        const expWords = cleanCompanyNameForWords(experience.company);
+
+        // Try subset match first
+        const [matchType, matchedWords] = checkSubsetMatch(
+          dictCleanedWords,
+          expWords
+        );
+        if (matchType) {
+          console.log(
+            `  ✔ Dictionary subset match (${matchType}): ${matchedWords}`
+          );
+          return [experience, 'abbr_dict_match', i];
+        }
+
+        // Fallback to word ratio
+        const similarity = wordMatchRatio(dictCleanedWords, expWords);
+        if (similarity >= threshold) {
+          console.log(
+            `  ✔ Dictionary word match! Similarity: ${similarity.toFixed(2)}`
+          );
+          console.log(`    Dictionary words: ${dictCleanedWords}`);
+          console.log(`    Experience words: ${expWords}`);
+          return [experience, 'abbr_dict_match', i];
+        }
+      }
+    }
+  }
   // --- Domain matching ---
   if (emailDomain && emailDomain !== 'no info') {
     console.log(`  ▶ Checking domain match for domain: ${emailDomain}`);
-    const domainBase = emailDomain.replace(
-      /\.(com|org|net|edu|gov|au|co|uk|ca|io|biz|info|us|eu|mil)$/i,
-      ''
-    );
+    const domainBase = extractBaseDomain(emailDomain);
     const domainParts = domainBase.split('.').filter(Boolean);
 
     for (let i = 0; i < experiences.length; i++) {
@@ -294,4 +349,17 @@ export default function findMatchingCompany(
 
   console.log(`  ✘ No match found!`);
   return ['no match', 'no match', -1];
+}
+
+function extractBaseDomain(email) {
+  if (!email || !email.includes('@')) return null;
+
+  const domain = email.split('@')[1];
+  const parts = domain.split('.');
+
+  if (parts.length >= 2) {
+    return parts[parts.length - 2];
+  } else {
+    return domain;
+  }
 }
