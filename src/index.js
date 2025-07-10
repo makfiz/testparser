@@ -17,9 +17,10 @@ import {
   updateCell,
   normalizeSheetStructure,
   processSheetData,
+  getRow,
 } from './sheetsService.js';
 
-import axios from 'axios';
+// import axios from 'axios';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,8 +58,8 @@ async function main() {
   // const spreadsheetId = extractSpreadsheetId(url);
   // const sheetId = extractSheetId(url);
 
-  const spreadsheetId = '180fh8cYh854ifmV37qqui9zkcl32LRRwsp7rtPgAGbs';
-  const sheetId = 1372950738;
+  const spreadsheetId = '1d44yez4vxbQlKhCzjf3QRnY6X5RlFHT2qUkG8UdrAFE';
+  const sheetId = 384167586;
 
   if (!spreadsheetId) {
     console.error('Не удалось извлечь Spreadsheet ID из ссылки.');
@@ -73,7 +74,7 @@ async function main() {
   console.log('spreadsheetId:', spreadsheetId);
   console.log('sheetId (gid):', sheetId);
 
-  const sheets = await getSheetsClient();
+  const sheets = getSheetsClient();
   let sheetTitle;
 
   try {
@@ -82,36 +83,33 @@ async function main() {
     let rowIndex = 2;
 
     await normalizeSheetStructure(sheets, spreadsheetId, sheetId, sheetTitle);
-    const lastColLetter = processSheetData(sheets, spreadsheetId, sheetTitle);
+    const { lastColLetter, headerMap } = await processSheetData(
+      sheets,
+      spreadsheetId,
+      sheetTitle
+    );
 
     let emptyRowCount = 0;
     while (true) {
-      // Читаем данные с листа
-
-      // 4. Считать строку целиком по диапазону
-      const data = await sheets.spreadsheets.values.get({
+      const rowObject = await getRow({
+        sheets,
         spreadsheetId,
-        range: `${sheetTitle}!A${rowIndex}:${lastColLetter}${rowIndex}`,
+        sheetTitle,
+        rowIndex,
+        lastColLetter,
+        headerMap,
       });
-      const row = data.data.values?.[0] || [];
 
-      // 5. Формируем объект, используя мапу
-      const rowObject = {};
-      for (const colName of requiredColumns) {
-        const idx = headerMap[colName.toLowerCase()];
-        rowObject[colName] = idx !== undefined ? row[idx] || '' : '';
-      }
-
-      // console.log(rowObject);
       console.log('rowObject', rowObject);
+
       if (emptyRowCount >= 1) {
-        break; // Выход из цикла после 2 подряд пустых строк
+        break;
       }
+
       if (!rowObject.first_name || !rowObject.last_name) {
         emptyRowCount++;
         rowIndex++;
         continue;
-        // await browser.close();
       }
 
       if (
@@ -121,308 +119,17 @@ async function main() {
         emptyRowCount = 0;
         console.log(' prooflink пустой');
 
-        try {
-          // === ЛОГИКА РАБОТЫ С API ДАННЫМИ ===
+        await processRapidLogic({
+          sheets,
+          spreadsheetId,
+          sheetTitle,
+          rowObject,
+          rowIndex,
+          headerMap,
+          lastColLetter,
+        });
 
-          let apiData = await fetchGoogleFullProfiles(rowObject);
-          console.log('apiData', apiData);
-          let experiences;
-
-          // console.log('apiData', apiData);
-
-          if (apiData.length > 0) {
-            const filteredData = apiData.filter(
-              (item) => (item._match_score || 0) >= 50
-            );
-            if (filteredData.length > 0) {
-              const bestMatch = filteredData.reduce((max, curr) => {
-                return curr._match_score > (max._match_score || 0) ? curr : max;
-              }, {});
-              experiences = bestMatch.experiences;
-              console.log('bestMatch', bestMatch);
-              console.log(' start Repid chek comp');
-
-              const firstName = rowObject.first_name.trim().toLowerCase();
-              const lastName = rowObject.last_name.trim().toLowerCase();
-              console.log('repid name', bestMatch.full_name.toLowerCase());
-              const hasNameVariants = checkNameVariantsInText(
-                bestMatch.full_name.toLowerCase(),
-                firstName,
-                lastName
-              );
-
-              // console.log()
-              const companyArr = [];
-
-              experiences.forEach((exp) => {
-                if (exp.company) {
-                  companyArr.push(exp.company);
-                }
-              });
-              if (hasNameVariants.status) {
-                if (rowObject.phone) {
-                  await sheets.spreadsheets.values.update({
-                    spreadsheetId,
-                    range: `${sheetTitle}!J${rowIndex}`,
-                    valueInputOption: 'RAW',
-                    requestBody: {
-                      values: [[bestMatch.phone]],
-                    },
-                  });
-                }
-                await sheets.spreadsheets.values.batchUpdate({
-                  spreadsheetId,
-                  requestBody: {
-                    valueInputOption: 'RAW',
-                    data: [
-                      {
-                        range: `${sheetTitle}!E${rowIndex}:F${rowIndex}`,
-                        values: [[bestMatch.linkedin_url, bestMatch.location]],
-                      },
-                      {
-                        range: `${sheetTitle}!Q${rowIndex}`,
-                        values: [[companyArr.join(', ')]],
-                      },
-                    ],
-                  },
-                });
-
-                const { company, email } = rowObject;
-                const [matchedExperience, matchType, index] =
-                  findMatchingCompany(company, experiences, email);
-                console.log('Result:', matchedExperience, matchType, index);
-
-                if (matchedExperience && matchedExperience != 'no match') {
-                  // const firstMatch = matchedExperiences[0];
-                  console.log('matchedExperience', matchedExperience);
-                  if (matchedExperience.is_current) {
-                    // console.log('Найдено совпадение, позиция текущая:', firstMatch);
-                    await sheets.spreadsheets.values.update({
-                      spreadsheetId,
-                      range: `${sheetTitle}!D${rowIndex}`,
-                      valueInputOption: 'RAW',
-                      requestBody: {
-                        values: [[matchedExperience.title]],
-                      },
-                    });
-                    const [matched, matchType, index] = findMatchingCompany(
-                      bestMatch.company,
-                      [matchedExperience],
-                      email
-                    );
-                    console.log(
-                      'matched Result header comp. and expirence comp. :',
-                      matched,
-                      matchType,
-                      index
-                    );
-
-                    if (
-                      matched &&
-                      matched != 'no match' &&
-                      bestMatch.company_employee_count &&
-                      bestMatch.company_linkedin_url &&
-                      bestMatch.company_industry
-                    ) {
-                      const ind = findMatchingIndustry(
-                        bestMatch.company_industry
-                      );
-                      console.log(
-                        'Компания в Rapid совпадает с companyVariants и company info присутсвует'
-                      );
-                      await sheets.spreadsheets.values.update({
-                        spreadsheetId,
-                        range: `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
-                        valueInputOption: 'RAW',
-                        requestBody: {
-                          values: [
-                            [
-                              bestMatch.company_employee_range,
-                              `${bestMatch.company_linkedin_url}/about`,
-                              bestMatch.company_industry,
-                              ind,
-                            ],
-                          ],
-                        },
-                      });
-                    } else if (matched == 'no match') {
-                      console.log(
-                        'Компания в Rapid совпадает с companyVariants и company info отутсвует'
-                      );
-
-                      const employees = await findEmployeeByEmail(
-                        rowObject.email
-                      );
-                      if (employees) {
-                        console.log(employees);
-                        await sheets.spreadsheets.values.update({
-                          spreadsheetId,
-                          range: `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
-                          valueInputOption: 'RAW',
-                          requestBody: {
-                            values: [
-                              [
-                                employees.K,
-                                employees.L,
-                                employees.M,
-                                employees.N,
-                              ],
-                            ],
-                          },
-                        });
-                      } else {
-                        const compData = await fetchCompanyDataByDomain(
-                          rowObject.email
-                        );
-                        if (compData) {
-                          const {
-                            company_name,
-                            employee_range,
-                            linkedin_url,
-                            industries,
-                          } = compData;
-                          const [matched, matchType, index] =
-                            findMatchingCompany(
-                              company,
-                              [{ company: company_name }],
-                              email
-                            );
-                          console.log(
-                            'matched Result header comp. and expirence comp. :',
-                            matched,
-                            matchType,
-                            index
-                          );
-                          if (matched && matched != 'no match') {
-                            const ind = findMatchingIndustry(industries[0]);
-                            await sheets.spreadsheets.values.update({
-                              spreadsheetId,
-                              range: `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
-                              valueInputOption: 'RAW',
-                              requestBody: {
-                                values: [
-                                  [
-                                    employee_range,
-                                    `${linkedin_url}/about`,
-                                    industries[0],
-                                    ind,
-                                  ],
-                                ],
-                              },
-                            });
-                          }
-                        }
-                      }
-                    }
-                  } else if (
-                    matchedExperience.is_current === false &&
-                    !matchedExperience.end_year &&
-                    (!matchedExperience.date_range || // null, undefined, пустое
-                      (typeof matchedExperience.date_range === 'string' &&
-                        matchedExperience.date_range.includes('-')))
-                  ) {
-                    console.log('ветхмй');
-
-                    await sheets.spreadsheets.values.batchUpdate({
-                      spreadsheetId,
-                      requestBody: {
-                        valueInputOption: 'RAW',
-                        data: [
-                          {
-                            range: `${sheetTitle}!G${rowIndex}`,
-                            values: [['!']],
-                          },
-                          {
-                            range: `${sheetTitle}!D${rowIndex}`,
-                            values: [[matchedExperience.title]],
-                          },
-                        ],
-                      },
-                    });
-                  } else if (
-                    matchedExperience.is_current === false &&
-                    matchedExperience.end_year
-                  ) {
-                    console.log('retired');
-
-                    await sheets.spreadsheets.values.batchUpdate({
-                      spreadsheetId,
-                      requestBody: {
-                        valueInputOption: 'RAW',
-                        data: [
-                          {
-                            range: `${sheetTitle}!G${rowIndex}`,
-                            values: [['a']],
-                          },
-                          {
-                            range: `${sheetTitle}!D${rowIndex}`,
-                            values: [[matchedExperience.title]],
-                          },
-                        ],
-                      },
-                    });
-                  } else {
-                    console.log(
-                      'Найдено совпадение, но позиция НЕ текущая:',
-                      matchedExperience
-                    );
-                    await sheets.spreadsheets.values.update({
-                      spreadsheetId,
-                      range: `${sheetTitle}!G${rowIndex}`,
-                      valueInputOption: 'RAW',
-                      requestBody: {
-                        values: [['not the actual company']],
-                      },
-                    });
-                  }
-                } else {
-                  console.log('Совпадений в experiences не найдено.');
-                  await sheets.spreadsheets.values.update({
-                    spreadsheetId,
-                    range: `${sheetTitle}!G${rowIndex}`,
-                    valueInputOption: 'RAW',
-                    requestBody: {
-                      values: [['no company match in experiences']],
-                    },
-                  });
-                }
-              } else {
-                await sheets.spreadsheets.values.update({
-                  spreadsheetId,
-                  range: `${sheetTitle}!G${rowIndex}`,
-                  valueInputOption: 'RAW',
-                  requestBody: {
-                    values: [
-                      [`not name match Rapid name:${bestMatch.full_name} `],
-                    ],
-                  },
-                });
-              }
-            } else {
-              await sheets.spreadsheets.values.update({
-                spreadsheetId,
-                range: `${sheetTitle}!G${rowIndex}`,
-                valueInputOption: 'RAW',
-                requestBody: {
-                  values: [['not found or match_score < 70']],
-                },
-              });
-            }
-          } else {
-            await sheets.spreadsheets.values.update({
-              spreadsheetId,
-              range: `${sheetTitle}!G${rowIndex}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['not found or match_score < 70']],
-              },
-            });
-          }
-
-          rowIndex++;
-        } catch (error) {
-          console.error('Ошибка при запросе  Rapid:', error.message);
-        }
+        rowIndex++;
       } else {
         rowIndex++;
         await new Promise((r) => setTimeout(r, 250));
@@ -434,6 +141,232 @@ async function main() {
 }
 
 main();
+
+async function processRows({
+  sheets,
+  spreadsheetId,
+  sheetTitle,
+  rowIndex,
+  rowObject,
+  bestMatch,
+}) {
+  const { company, email } = rowObject;
+  const { experiences } = bestMatch;
+
+  const companyArr = [];
+  for (const exp of experiences) {
+    if (exp.company) {
+      companyArr.push(exp.company);
+    }
+  }
+
+  if (rowObject.phone) {
+    await updateCell(sheets, spreadsheetId, `${sheetTitle}!J${rowIndex}`, [
+      bestMatch.phone,
+    ]);
+  }
+
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      valueInputOption: 'RAW',
+      data: [
+        {
+          range: `${sheetTitle}!E${rowIndex}:F${rowIndex}`,
+          values: [[bestMatch.linkedin_url, bestMatch.location]],
+        },
+        {
+          range: `${sheetTitle}!Q${rowIndex}`,
+          values: [[companyArr.join(', ')]],
+        },
+      ],
+    },
+  });
+
+  const [matchedExperience, matchType, index] = findMatchingCompany(
+    company,
+    experiences,
+    email
+  );
+
+  console.log('Result:', matchedExperience, matchType, index);
+
+  if (matchedExperience && matchedExperience !== 'no match') {
+    if (matchedExperience.is_current) {
+      await updateCell(sheets, spreadsheetId, `${sheetTitle}!D${rowIndex}`, [
+        matchedExperience.title,
+      ]);
+
+      const [matched, matchType2] = findMatchingCompany(
+        bestMatch.company,
+        [matchedExperience],
+        email
+      );
+
+      console.log(
+        'matched Result header comp. and experience comp.:',
+        matched,
+        matchType2
+      );
+
+      if (
+        matched &&
+        matched !== 'no match' &&
+        bestMatch.company_employee_count &&
+        bestMatch.company_linkedin_url &&
+        bestMatch.company_industry
+      ) {
+        const ind = findMatchingIndustry(bestMatch.company_industry);
+        await updateCell(
+          sheets,
+          spreadsheetId,
+          `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
+          [
+            bestMatch.company_employee_range,
+            `${bestMatch.company_linkedin_url}/about`,
+            bestMatch.company_industry,
+            ind,
+          ]
+        );
+      } else {
+        const employees = await findEmployeeByEmail(rowObject.email);
+        if (employees) {
+          console.log(employees);
+          await updateCell(
+            sheets,
+            spreadsheetId,
+            `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
+            [employees.K, employees.L, employees.M, employees.N]
+          );
+        } else {
+          const compData = await fetchCompanyDataByDomain(rowObject.email);
+          if (compData) {
+            const { company_name, employee_range, linkedin_url, industries } =
+              compData;
+
+            const [matchedComp] = findMatchingCompany(
+              company,
+              [{ company: company_name }],
+              email
+            );
+
+            if (matchedComp && matchedComp !== 'no match') {
+              const ind = findMatchingIndustry(industries[0]);
+              await updateCell(
+                sheets,
+                spreadsheetId,
+                `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
+                [employee_range, `${linkedin_url}/about`, industries[0], ind]
+              );
+            }
+          }
+        }
+      }
+    } else if (
+      matchedExperience.is_current === false &&
+      !matchedExperience.end_year &&
+      (!matchedExperience.date_range ||
+        (typeof matchedExperience.date_range === 'string' &&
+          matchedExperience.date_range.includes('-')))
+    ) {
+      console.log('ветхий');
+      await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
+        '!',
+      ]);
+      await updateCell(sheets, spreadsheetId, `${sheetTitle}!D${rowIndex}`, [
+        matchedExperience.title,
+      ]);
+    } else if (
+      matchedExperience.is_current === false &&
+      matchedExperience.end_year
+    ) {
+      console.log('retired');
+      await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
+        'a',
+      ]);
+      await updateCell(sheets, spreadsheetId, `${sheetTitle}!D${rowIndex}`, [
+        matchedExperience.title,
+      ]);
+    } else {
+      console.log(
+        'Найдено совпадение, но позиция НЕ текущая:',
+        matchedExperience
+      );
+      await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
+        'not the actual company',
+      ]);
+    }
+  } else {
+    console.log('Совпадений в experiences не найдено.');
+    await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
+      'no company match in experiences',
+    ]);
+  }
+}
+
+async function processRapidLogic({
+  sheets,
+  spreadsheetId,
+  sheetTitle,
+  rowObject,
+  rowIndex,
+  headerMap,
+  lastColLetter,
+}) {
+  try {
+    let apiData = await fetchGoogleFullProfiles(rowObject);
+    console.log('apiData', apiData);
+
+    if (apiData.length > 0) {
+      const filteredData = apiData.filter(
+        (item) => (item._match_score || 0) >= 50
+      );
+
+      if (filteredData.length > 0) {
+        const bestMatch = filteredData.reduce((max, curr) => {
+          return curr._match_score > (max._match_score || 0) ? curr : max;
+        }, {});
+        console.log('bestMatch', bestMatch);
+
+        const firstName = rowObject.first_name.trim().toLowerCase();
+        const lastName = rowObject.last_name.trim().toLowerCase();
+        const hasNameVariants = checkNameVariantsInText(
+          bestMatch.full_name.toLowerCase(),
+          firstName,
+          lastName
+        );
+
+        if (hasNameVariants.status) {
+          await processRows({
+            sheets,
+            spreadsheetId,
+            sheetTitle,
+            rowIndex,
+            rowObject,
+            bestMatch,
+          });
+        } else {
+          await updateCell(
+            sheets,
+            spreadsheetId,
+            `${sheetTitle}!G${rowIndex}`,
+            [`not name match Rapid name:${bestMatch.full_name} `]
+          );
+        }
+      } else {
+        await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
+          'not found or match_score < 70',
+        ]);
+      }
+    } else {
+      await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
+        'not found or match_score < 70',
+      ]);
+    }
+  } catch (error) {
+    console.error('Ошибка при запросе Rapid:', error.message);
+  }
+}
 
 function findEmployeeByEmail(email) {
   return new Promise((resolve) => {
@@ -450,8 +383,8 @@ function findEmployeeByEmail(email) {
 
     const domain = match[1];
     console.log('Искомый домен:', domain);
-
-    fs.readFile('./temp/employees.json', 'utf-8', (err, data) => {
+    const filePath = path.join(__dirname, 'temp', 'employees.json');
+    fs.readFile(filePath, 'utf-8', (err, data) => {
       if (err) {
         console.error('Ошибка чтения employees.json:', err);
         return resolve(null);

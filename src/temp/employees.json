@@ -1,75 +1,9 @@
 {
-  "visa.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/visa/about",
-    "M": "IT Services and IT Consulting",
-    "N": "Computers and Technology"
-  },
-  "vanguard.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/vanguard/about",
-    "M": "Financial Services",
-    "N": "Finance"
-  },
-  "interpublic.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/ipg/about",
-    "M": "Advertising Services",
-    "N": "Advertising / Marketing"
-  },
-  "dropbox.com": {
+  "cordenpharma.com": {
     "K": "1001-5000",
-    "L": "https://www.linkedin.com/company/dropbox/about",
-    "M": "Software Development",
-    "N": "Computers and Technology"
-  },
-  "hp.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/hp/about",
-    "M": "IT Services and IT Consulting",
-    "N": "Computers and Technology"
-  },
-  "hpe.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/hewlett-packard-enterprise/about",
-    "M": "IT Services and IT Consulting",
-    "N": "Computers and Technology"
-  },
-  "amwins.com": {
-    "K": "5001-10000",
-    "L": "https://www.linkedin.com/company/amwins-group/about",
-    "M": "Insurance",
-    "N": "Insurance"
-  },
-  "coronishealth.com": {
-    "K": "5001-10000",
-    "L": "https://www.linkedin.com/company/coronishealth/about",
-    "M": "Hospitals and Health Care",
-    "N": "Healthcare / Medical"
-  },
-  "te.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/te-connectivity/about",
-    "M": "Appliances, Electrical, and Electronics Manufacturing",
-    "N": "Manufacturing"
-  },
-  "progressive.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/progressive-insurance/about",
-    "M": "Insurance",
-    "N": "Insurance"
-  },
-  "intuit.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/intuit/about",
-    "M": "Software Development",
-    "N": "Computers and Technology"
-  },
-  "cnh.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/cnh/about",
-    "M": "Machinery Manufacturing",
-    "N": "Manufacturing"
+    "L": "https://www.linkedin.com/company/corden-pharma-gmbh/about",
+    "M": "Pharmaceutical Manufacturing",
+    "N": "Biotech and Pharmaceuticals"
   },
   "titanamerica.com": {
     "K": "1001-5000",
@@ -79,9 +13,15 @@
   },
   "agreliantgenetics.com": {
     "K": "501-1000",
-    "L": "https://www.linkedin.com/company/agreliant-genetics/about",
+    "L": "https://www.linkedin.com/company/agreliant-genetics//about",
     "M": "Biotechnology Research",
     "N": "Biotech and Pharmaceuticals"
+  },
+  "te.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/te-connectivity/about",
+    "M": "Appliances, Electrical, and Electronics Manufacturing",
+    "N": "Manufacturing"
   },
   "qvc.com": {
     "K": "10001+",
@@ -131,6 +71,12 @@
     "M": "Defense and Space Manufacturing",
     "N": "Aerospace / Aviation"
   },
+  "penumbrainc.com": {
+    "K": "1001-5000",
+    "L": "https://www.linkedin.com/company/penumbra-inc/about",
+    "M": "Medical Equipment Manufacturing",
+    "N": "Manufacturing"
+  },
   "lyft.com": {
     "K": "5001-10000",
     "L": "https://www.linkedin.com/company/lyft/about",
@@ -149,10 +95,76 @@
     "M": "IT Services and IT Consulting",
     "N": "Computers and Technology"
   },
-  "cordenpharma.com": {
+  "visa.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/visa/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "vanguard.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/vanguard/about",
+    "M": "Financial Services",
+    "N": "Finance"
+  },
+  "interpublic.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/ipg/about",
+    "M": "Advertising Services",
+    "N": "Advertising / Marketing"
+  },
+  "dropbox.com": {
     "K": "1001-5000",
-    "L": "https://www.linkedin.com/company/corden-pharma-gmbh/about",
-    "M": "Pharmaceutical Manufacturing",
-    "N": "Biotech and Pharmaceuticals"
+    "L": "https://www.linkedin.com/company/dropbox/about",
+    "M": "Software Development",
+    "N": "Computers and Technology"
+  },
+  "hp.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/hp/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "cherokee.org": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/cherokee-nation/about",
+    "M": "Government Administration",
+    "N": "Government"
+  },
+  "hpe.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/hewlett-packard-enterprise/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "amwins.com": {
+    "K": "5001-10000",
+    "L": "https://www.linkedin.com/company/amwins-group/about",
+    "M": "Insurance",
+    "N": "Insurance"
+  },
+  "coronishealth.com": {
+    "K": "5001-10000",
+    "L": "https://www.linkedin.com/company/coronishealth/about",
+    "M": "Hospitals and Health Care",
+    "N": "Healthcare / Medical"
+  },
+  "progressive.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/progressive-insurance/about",
+    "M": "Insurance",
+    "N": "Insurance"
+  },
+  "intuit.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/intuit/about",
+    "M": "Software Development",
+    "N": "Computers and Technology"
+  },
+  "cnh.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/cnh/about",
+    "M": "Machinery Manufacturing",
+    "N": "Manufacturing"
   }
 }

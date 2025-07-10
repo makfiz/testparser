@@ -1,11 +1,15 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
+const rapidapiKey = process.env.X_RAPIDAPI_KEY;
+console.log(rapidapiKey);
 export async function fetchGoogleFullProfiles(person) {
   const options = {
     method: 'POST',
     url: 'https://web-scraping-api2.p.rapidapi.com/google-full-profiles',
     headers: {
-      'x-rapidapi-key': '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07',
+      'x-rapidapi-key': rapidapiKey,
       'x-rapidapi-host': 'web-scraping-api2.p.rapidapi.com',
       'Content-Type': 'application/json',
     },
@@ -59,7 +63,7 @@ export async function fetchCompanyDataByDomain(email) {
       domain: domain,
     },
     headers: {
-      'x-rapidapi-key': '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07',
+      'x-rapidapi-key': rapidapiKey,
       'x-rapidapi-host': 'web-scraping-api2.p.rapidapi.com',
     },
   };

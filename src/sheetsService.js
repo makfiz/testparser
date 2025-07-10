@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const KEYFILE = path.join(__dirname, './my-nodejs-sheets-c019fa61949c.json');
 
-const requiredColumns = [
+export const requiredColumns = [
   'first_name',
   'last_name',
   'company',
@@ -55,14 +55,14 @@ export async function getSheetTitleById(sheets, spreadsheetId, sheetId) {
   }
 }
 
-export async function updateCell(sheets, sheetId, range, value) {
+export async function updateCell(sheets, spreadsheetId, range, value = []) {
   try {
     await sheets.spreadsheets.values.update({
-      sheetId,
+      spreadsheetId,
       range,
       valueInputOption: 'RAW',
       requestBody: {
-        values: [[value]],
+        values: [value],
       },
     });
   } catch (error) {
@@ -258,9 +258,39 @@ export async function processSheetData(sheets, spreadsheetId, sheetTitle) {
 
     console.log('[processSheetData] JSON сохранён:', employeesPath);
 
-    return lastColLetter;
+    return { lastColLetter, headerMap };
   } catch (error) {
     console.error('[processSheetData] Ошибка:', error.message);
     throw error;
+  }
+}
+
+export async function getRow({
+  sheets,
+  spreadsheetId,
+  sheetTitle,
+  rowIndex,
+  lastColLetter,
+  headerMap,
+}) {
+  try {
+    const range = `${sheetTitle}!A${rowIndex}:${lastColLetter}${rowIndex}`;
+    const data = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
+
+    const row = data.data.values?.[0] || [];
+
+    const rowObject = {};
+    for (const colName of requiredColumns) {
+      const idx = headerMap[colName.toLowerCase()];
+      rowObject[colName] = idx !== undefined ? row[idx] || '' : '';
+    }
+
+    return rowObject;
+  } catch (error) {
+    console.error('[getRowObjectByIndex] Ошибка:', error.message);
+    return null;
   }
 }
