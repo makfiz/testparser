@@ -36,16 +36,16 @@ export async function getSheetsClient() {
   return google.sheets({ version: 'v4', auth });
 }
 
-export async function getSheetTitleById(sheets, spreadsheetId, sheetId) {
+export async function getSheetTitleById(sheets, sheetId) {
   const res = await sheets.spreadsheets.get({ spreadsheetId });
   const sheet = res.data.sheets.find((s) => s.properties.sheetId === sheetId);
   if (!sheet) throw new Error(`Sheet with ID ${sheetId} not found`);
   return sheet.properties.title;
 }
 
-export async function updateCell(sheets, spreadsheetId, range, value) {
+export async function updateCell(sheets, sheetId, range, value) {
   await sheets.spreadsheets.values.update({
-    spreadsheetId,
+    sheetId,
     range,
     valueInputOption: 'RAW',
     requestBody: {
@@ -67,22 +67,18 @@ function columnIndexToLetter(index) {
   return letter;
 }
 
-export async function normalizeSheetStructure(
-  sheets,
-  spreadsheetId,
-  sheetTitle
-) {
+export async function normalizeSheetStructure(sheets, sheetId, sheetTitle) {
   // Получаем sheetId
-  const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
-  const sheet = spreadsheet.data.sheets.find(
-    (s) => s.properties.title === sheetTitle
-  );
-  if (!sheet) throw new Error(`Лист "${sheetTitle}" не найден`);
-  const sheetId = sheet.properties.sheetId;
+  //   const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+  //   const sheet = spreadsheet.data.sheets.find(
+  //     (s) => s.properties.title === sheetTitle
+  //   );
+  //   if (!sheet) throw new Error(`Лист "${sheetTitle}" не найден`);
+  //   const sheetId = sheet.properties.sheetId;
 
   // Получаем текущие данные
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
+    sheetId,
     range: `${sheetTitle}`,
   });
   const rows = res.data.values || [];
@@ -98,7 +94,7 @@ export async function normalizeSheetStructure(
     if (!currentHeaders.includes(colName)) {
       // Вставляем колонку в позицию i с помощью insertDimension
       await sheets.spreadsheets.batchUpdate({
-        spreadsheetId,
+        sheetId,
         requestBody: {
           requests: [
             {
@@ -118,7 +114,7 @@ export async function normalizeSheetStructure(
 
       // Обновляем заголовок новой колонки
       await sheets.spreadsheets.values.update({
-        spreadsheetId,
+        sheetId,
         range: `${sheetTitle}!${columnIndexToLetter(i)}1`,
         valueInputOption: 'RAW',
         requestBody: {
@@ -141,7 +137,7 @@ export async function normalizeSheetStructure(
 
   // Обновляем весь диапазон, чтобы добавить пустые ячейки в новые колонки у строк
   await sheets.spreadsheets.values.update({
-    spreadsheetId,
+    sheetId,
     range: `${sheetTitle}!A1`,
     valueInputOption: 'RAW',
     requestBody: {
@@ -189,7 +185,7 @@ export async function normalizeSheetStructure(
 
   if (requests.length > 0) {
     await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
+      sheetId,
       requestBody: { requests },
     });
   }
@@ -199,10 +195,10 @@ export async function normalizeSheetStructure(
   );
 }
 
-export async function processSheetData(sheets, spreadsheetId, sheetTitle) {
+export async function processSheetData(sheets, sheetId, sheetTitle) {
   // Получаем заголовки первой строки
   const headerRes = await sheets.spreadsheets.values.get({
-    spreadsheetId,
+    sheetId,
     range: `${sheetTitle}!1:1`,
   });
   const headers = headerRes.data.values?.[0] || [];
@@ -219,7 +215,7 @@ export async function processSheetData(sheets, spreadsheetId, sheetTitle) {
   // Получаем данные с диапазона I2:N (без заголовков)
   const dataRange = `${sheetTitle}!I2:N`;
   const dataRes = await sheets.spreadsheets.values.get({
-    spreadsheetId,
+    sheetId,
     range: dataRange,
   });
   const rows = dataRes.data.values || [];
