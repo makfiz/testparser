@@ -13,7 +13,7 @@ export async function fetchGoogleFullProfiles(person) {
     },
     data: {
       name: `${person.first_name} ${person.last_name}`,
-      company_name: `${person.company}`,
+      company_name: trimCompanyName(person.company),
       job_title: '',
       location: '',
       keywords: '',
@@ -37,10 +37,11 @@ export async function fetchGoogleFullProfiles(person) {
   //     limit: 1,
   //   },
   // };
-  // console.log(options);
+  console.log(options);
   try {
     const response = await axios.request(options);
     if (response.status === 200) {
+      console.log(response?.data?.data ?? []);
       return response?.data?.data ?? [];
     } else {
       console.error(`Request failed with status ${response.status}`);
@@ -91,3 +92,26 @@ export async function fetchCompanyDataByDomain(email) {
     return null;
   }
 }
+
+function trimCompanyName(company, maxLength = 35) {
+  const words = company.split(/\s+/);
+  let result = '';
+
+  for (const word of words) {
+    // Проверяем длину, если добавим слово (и пробел, если не первая итерация)
+    const testString = result.length === 0 ? word : result + ' ' + word;
+    if (testString.length > maxLength) {
+      break;
+    }
+    result = testString;
+  }
+
+  return result;
+}
+
+fetchGoogleFullProfiles({
+  first_name: 'Nigel',
+  last_name: 'Fletcher',
+  company:
+    'US Navy - Naval Air Warfare Center, Aircraft Division - Lakehurst - NAWC-AD',
+});
