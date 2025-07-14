@@ -160,29 +160,6 @@ async function processRows({
     }
   }
 
-  if (rowObject.phone) {
-    await updateCell(sheets, spreadsheetId, `${sheetTitle}!J${rowIndex}`, [
-      bestMatch.phone,
-    ]);
-  }
-
-  await sheets.spreadsheets.values.batchUpdate({
-    spreadsheetId,
-    requestBody: {
-      valueInputOption: 'RAW',
-      data: [
-        {
-          range: `${sheetTitle}!E${rowIndex}:F${rowIndex}`,
-          values: [[bestMatch.linkedin_url, bestMatch.location]],
-        },
-        {
-          range: `${sheetTitle}!Q${rowIndex}`,
-          values: [[companyArr.join(', ')]],
-        },
-      ],
-    },
-  });
-
   const [matchedExperience, matchType, index] = findMatchingCompany(
     company,
     experiences,
@@ -192,6 +169,32 @@ async function processRows({
   console.log('Result:', matchedExperience, matchType, index);
 
   if (matchedExperience && matchedExperience !== 'no match') {
+    if (!rowObject.phone) {
+      await updateCell(sheets, spreadsheetId, `${sheetTitle}!J${rowIndex}`, [
+        bestMatch.phone,
+      ]);
+    }
+
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        valueInputOption: 'RAW',
+        data: [
+          {
+            range: `${sheetTitle}!E${rowIndex}:F${rowIndex}`,
+            values: [[bestMatch.linkedin_url, bestMatch.location]],
+          },
+          {
+            range: `${sheetTitle}!Q${rowIndex}`,
+            values: [[companyArr.join(', ')]],
+          },
+          {
+            range: `${sheetTitle}!R${rowIndex}`,
+            values: [[bestMatch._match_score]],
+          },
+        ],
+      },
+    });
     if (matchedExperience.is_current) {
       await updateCell(sheets, spreadsheetId, `${sheetTitle}!D${rowIndex}`, [
         matchedExperience.title,
@@ -300,6 +303,7 @@ async function processRows({
     console.log('Совпадений в experiences не найдено.');
     await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
       'no company match in experiences',
+      // 'no info',
     ]);
   }
 }
@@ -319,7 +323,7 @@ async function processRapidLogic({
 
     if (apiData.length > 0) {
       const filteredData = apiData.filter(
-        (item) => (item._match_score || 0) >= 50
+        (item) => (item._match_score || 0) >= 1
       );
 
       if (filteredData.length > 0) {
@@ -349,18 +353,20 @@ async function processRapidLogic({
           await updateCell(
             sheets,
             spreadsheetId,
-            `${sheetTitle}!G${rowIndex}`,
-            [`not name match Rapid name:${bestMatch.full_name} `]
+            `${sheetTitle}!G${rowIndex}`[
+              [`not name match Rapid name:${bestMatch.full_name} `]
+              // `no info `
+            ]
           );
         }
       } else {
         await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
-          'not found or match_score < 70',
+          `no info `,
         ]);
       }
     } else {
       await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
-        'not found or match_score < 70',
+        `no info `,
       ]);
     }
   } catch (error) {

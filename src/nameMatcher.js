@@ -8,8 +8,10 @@ export function checkNameVariantsInText(text, firstName, lastName) {
     .split(/\s+/)
     .filter(Boolean);
 
-  const firstNameVariants = generateAllCombinations(firstNameParts);
-  const lastNameVariants = generateAllCombinations(lastNameParts);
+  // Для имени - с усечением
+  const firstNameVariants = generateAllCombinations(firstNameParts, true);
+  // Для фамилии - без усечения
+  const lastNameVariants = generateAllCombinations(lastNameParts, false);
 
   const fNameFound = firstNameVariants.some((variant) =>
     blockText.includes(variant)
@@ -21,22 +23,27 @@ export function checkNameVariantsInText(text, firstName, lastName) {
   return { status: fNameFound && lNameFound };
 }
 
-function generateAllCombinations(parts) {
+// Добавляем параметр cutWords, чтобы управлять обрезкой
+function generateAllCombinations(parts, cutWords) {
   if (parts.length === 0) return [];
 
-  const allVariants = parts.map(generateWordVariants);
+  const allVariants = parts.map((part) => generateWordVariants(part, cutWords));
   const combos = cartesianProduct(allVariants).map((words) => words.join(' '));
 
   return Array.from(new Set([...combos, ...allVariants.flat()]));
 }
 
-function generateWordVariants(word) {
+// Добавляем параметр cutWord, если false - не обрезаем
+function generateWordVariants(word, cutWord) {
   const variants = new Set();
   if (!word) return [];
 
   variants.add(word);
-  if (word.length > 0) variants.add(word.charAt(0) + '.');
-  if (word.length > 3) variants.add(word.slice(0, 2));
+  variants.add(word.charAt(0) + '.');
+
+  if (cutWord && word.length > 3) {
+    variants.add(word.slice(0, 2));
+  }
 
   return Array.from(variants);
 }
