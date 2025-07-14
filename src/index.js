@@ -290,14 +290,6 @@ async function processRows({
       await updateCell(sheets, spreadsheetId, `${sheetTitle}!D${rowIndex}`, [
         matchedExperience.title,
       ]);
-    } else {
-      console.log(
-        'Найдено совпадение, но позиция НЕ текущая:',
-        matchedExperience
-      );
-      await updateCell(sheets, spreadsheetId, `${sheetTitle}!G${rowIndex}`, [
-        'not the actual company',
-      ]);
     }
   } else {
     console.log('Совпадений в experiences не найдено.');
