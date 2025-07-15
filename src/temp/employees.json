@@ -1,68 +1,68 @@
 {
-  "army.mil": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/united-states-department-of-the-army/about",
+  "y2y.net": {
+    "K": "11-50",
+    "L": "https://www.linkedin.com/company/yellowstone-to-yukon-conservation-initiative/about",
+    "M": "Civic and Social Organizations",
+    "N": "Non-Profit / Organizations"
+  },
+  "topaces.com": {
+    "K": "501-1000",
+    "L": "https://www.linkedin.com/company/top-aces/about",
+    "M": "Military and International Affairs",
+    "N": "Unknown"
+  },
+  "jewishfoundation.org": {
+    "K": "11-50",
+    "L": "https://www.linkedin.com/company/jewish-foundation-of-manitoba//about",
+    "M": "Philanthropic Fundraising Services",
+    "N": "Non-Profit / Organizations"
+  },
+  "trentu.ca": {
+    "K": "501-1000",
+    "L": "https://www.linkedin.com/school/trent-university",
+    "M": "Higher Education",
+    "N": "Education"
+  },
+  "ovariancanada.org": {
+    "K": "11-50",
+    "L": "https://www.linkedin.com/company/ovarian-cancer-canada/about",
+    "M": "Non-profit Organizations",
+    "N": "Non-Profit / Organizations"
+  },
+  "yfc.ca": {
+    "K": "11-50",
+    "L": "https://www.linkedin.com/company/youth-for-christ-canada/about",
+    "M": "Non-profit Organizations",
+    "N": "Non-Profit / Organizations"
+  },
+  "conservationhamilton.ca": {
+    "K": "51-200",
+    "L": "https://www.linkedin.com/company/hamilton-conservation-authority//about",
+    "M": "Environmental Services",
+    "N": "Commercial Services"
+  },
+  "villestoneham.com": {
+    "K": "51-200",
+    "L": "https://www.linkedin.com/company/municipalite-de-stoneham-et-tewkesbury/about",
     "M": "Government Administration",
     "N": "Government"
   },
-  "navy.mil": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/commander-navy-installations-command-cnic-hq/about",
-    "M": "Armed Forces",
-    "N": "Government"
+  "mastercardfdn.org": {
+    "K": "51-200",
+    "L": "https://www.linkedin.com/company/the-mastercard-foundation/about",
+    "M": "Non-profit Organization Management",
+    "N": "Non-Profit / Organizations"
   },
-  "us.af.mil": {
-    "K": "5001-10000",
-    "L": "https://www.linkedin.com/company/air-force-research-laboratory/about",
-    "M": "Armed Forces",
-    "N": "Government"
-  },
-  "raytheon.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/raytheon/about",
-    "M": "Defense and Space Manufacturing",
-    "N": "Aerospace / Aviation"
-  },
-  "spaceforce.mil": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/spaceforcedod/about",
-    "M": "Defense and Space Manufacturing",
-    "N": "Aerospace / Aviation"
-  },
-  "useagle.org": {
-    "K": "201-500",
-    "L": "https://www.linkedin.com/company/useaglefcu/about",
-    "M": "Financial Services",
-    "N": "Finance"
-  },
-  "mail.mil": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/disadod/about",
-    "M": "IT Services and IT Consulting",
-    "N": "Computers and Technology"
-  },
-  "sapns2.com": {
+  "sd72.bc.ca": {
     "K": "501-1000",
-    "L": "https://www.linkedin.com/company/sapns2/about",
-    "M": "IT Services and IT Consulting",
-    "N": "Computers and Technology"
-  },
-  "summit7.us": {
-    "K": "201-500",
-    "L": "https://www.linkedin.com/company/summit-7-systems/about",
-    "M": "IT Services and IT Consulting",
-    "N": "Computers and Technology"
-  },
-  "verizonwireless.com": {
-    "K": "10001+",
-    "L": "https://www.linkedin.com/company/verizon/about",
-    "M": "IT Services and IT Consulting",
-    "N": "Computers and Technology"
-  },
-  "unity.com": {
-    "K": "201-500",
-    "L": "https://www.linkedin.com/school/universidad-libre//about",
-    "M": "Higher Education",
+    "L": "https://www.linkedin.com/company/school-district-72/about",
+    "M": "Primary and Secondary Education",
     "N": "Education"
+  },
+  "cbwc.ca": {
+    "K": "11-50",
+    "L": "https://www.linkedin.com/company/canadian-baptists-of-western-canada/about",
+    "M": "Religious Institutions",
+    "N": "Non-Profit / Organizations"
   }
 }

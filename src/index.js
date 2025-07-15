@@ -9,6 +9,7 @@ import findMatchingCompany from './companyMatcher.js';
 import {
   fetchGoogleFullProfiles,
   fetchCompanyDataByDomain,
+  fetchCompanyDataByUrl,
 } from './rapidApi.js';
 import { checkNameVariantsInText } from './nameMatcher.js';
 import {
@@ -184,14 +185,14 @@ async function processRows({
             range: `${sheetTitle}!E${rowIndex}:F${rowIndex}`,
             values: [[bestMatch.linkedin_url, bestMatch.location]],
           },
-          {
-            range: `${sheetTitle}!Q${rowIndex}`,
-            values: [[companyArr.join(', ')]],
-          },
-          {
-            range: `${sheetTitle}!R${rowIndex}`,
-            values: [[bestMatch._match_score]],
-          },
+          // {
+          //   range: `${sheetTitle}!Q${rowIndex}`,
+          //   values: [[companyArr.join(', ')]],
+          // },
+          // {
+          //   range: `${sheetTitle}!R${rowIndex}`,
+          //   values: [[bestMatch._match_score]],
+          // },
         ],
       },
     });
@@ -219,22 +220,17 @@ async function processRows({
         bestMatch.company_linkedin_url &&
         bestMatch.company_industry
       ) {
-        const ind = findMatchingIndustry(bestMatch.company_industry);
+        // const ind = findMatchingIndustry(bestMatch.company_industry);
         await updateCell(
           sheets,
           spreadsheetId,
           `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
-          [
-            bestMatch.company_employee_range,
-            `${bestMatch.company_linkedin_url}/about`,
-            bestMatch.company_industry,
-            ind,
-          ]
+          normalizeCompanyData(bestMatch)
         );
       } else {
         const employees = await findEmployeeByEmail(rowObject.email);
         if (employees) {
-          console.log(employees);
+          console.log('employees', employees);
           await updateCell(
             sheets,
             spreadsheetId,
@@ -242,25 +238,47 @@ async function processRows({
             [employees.K, employees.L, employees.M, employees.N]
           );
         } else {
-          const compData = await fetchCompanyDataByDomain(rowObject.email);
-          if (compData) {
-            const { company_name, employee_range, linkedin_url, industries } =
-              compData;
-
-            const [matchedComp] = findMatchingCompany(
-              company,
-              [{ company: company_name }],
-              email
+          if (rowObject.email.includes('.gov')) {
+            console.log('Email содержит .gov');
+            const compData = await fetchCompanyDataByUrl(
+              matchedExperience.company_public_url
             );
+            if (compData) {
+              // const { company_name, employee_range, linkedin_url, industries } =
+              //   compData;
 
-            if (matchedComp && matchedComp !== 'no match') {
-              const ind = findMatchingIndustry(industries[0]);
+              // const [matchedComp] = findMatchingCompany(
+              //   company,
+              //   [{ company: email }],
+              //   email
+              // );
+
+              // if (matchedComp && matchedComp !== 'no match') {
+              // const ind = findMatchingIndustry(industries[0]);
               await updateCell(
                 sheets,
                 spreadsheetId,
                 `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
-                [employee_range, `${linkedin_url}/about`, industries[0], ind]
+                normalizeCompanyData(compData)
               );
+              // }
+            }
+          } else {
+            console.log('Email не содержит .gov');
+            const compData = await fetchCompanyDataByDomain(rowObject.email);
+            if (compData) {
+              // const { company_name, employee_range, linkedin_url, industries } =
+              //   compData;
+
+              // if (matchedComp && matchedComp !== 'no match') {
+              // const ind = findMatchingIndustry(industries[0]);
+              await updateCell(
+                sheets,
+                spreadsheetId,
+                `${sheetTitle}!K${rowIndex}:N${rowIndex}`,
+                normalizeCompanyData(compData)
+              );
+              // }
             }
           }
         }
@@ -345,10 +363,9 @@ async function processRapidLogic({
           await updateCell(
             sheets,
             spreadsheetId,
-            `${sheetTitle}!G${rowIndex}`[
-              [`not name match Rapid name:${bestMatch.full_name} `]
-              // `no info `
-            ]
+            `${sheetTitle}!G${rowIndex}`,
+            // [`not name match Rapid name:${bestMatch.full_name} `]
+            `no info `
           );
         }
       } else {
@@ -406,4 +423,32 @@ function findEmployeeByEmail(email) {
       return resolve(employeeInfo);
     });
   });
+}
+
+function normalizeCompanyData(source) {
+  // Значения по умолчанию
+  let employee_range = '-';
+  let linkedin_url = '-';
+  let industries = '-';
+  let ind = '-';
+
+  if (source) {
+    const er = source.employee_range || source.company_employee_range;
+    const lu = source.linkedin_url || source.company_linkedin_url;
+    const inds =
+      source.industries ||
+      (source.company_industry ? [source.company_industry] : undefined);
+
+    employee_range = er && !er.includes('None') ? er : '-';
+    linkedin_url = lu ? `${lu.replace(/\/$/, '')}/about` : '-';
+    industries = Array.isArray(inds) && inds.length > 0 ? inds : '-';
+    ind = industries !== '-' ? findMatchingIndustry(industries[0]) : '-';
+  }
+
+  return [
+    employee_range,
+    linkedin_url,
+    industries !== '-' ? industries[0] : '-',
+    ind,
+  ];
 }

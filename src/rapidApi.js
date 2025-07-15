@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const rapidapiKey = '83f97c6dfemsh32a00fce7d3d88fp1b8a2bjsn25a4831ccc07';
+const rapidapiKey = '4e1dcc5324msh6f371a2a227b261p1666b6jsnb3d45f56dc20';
 
 export async function fetchGoogleFullProfiles(person) {
   const options = {
@@ -78,6 +78,34 @@ export async function fetchCompanyDataByDomain(email) {
   //   },
   // };
   // console.log(options);
+  try {
+    const response = await axios.request(options);
+    if (response.status === 200) {
+      console.log(response.data);
+      return response.data.data;
+    } else {
+      console.error(`Request failed with status ${response.status}`);
+      return null;
+    }
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+export async function fetchCompanyDataByUrl(url) {
+  const options = {
+    method: 'GET',
+    url: 'https://web-scraping-api2.p.rapidapi.com/get-company-by-url',
+    params: {
+      linkedin_url: url,
+    },
+    headers: {
+      'x-rapidapi-key': rapidapiKey,
+      'x-rapidapi-host': 'web-scraping-api2.p.rapidapi.com',
+    },
+  };
+
   try {
     const response = await axios.request(options);
     if (response.status === 200) {
