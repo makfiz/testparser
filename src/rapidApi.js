@@ -37,7 +37,7 @@ export async function fetchGoogleFullProfiles(person) {
   //     limit: 1,
   //   },
   // };
-  console.log(options);
+  // console.log(options);
   try {
     const response = await axios.request(options);
     if (response.status === 200) {
@@ -109,9 +109,9 @@ function trimCompanyName(company, maxLength = 35) {
   return result;
 }
 
-fetchGoogleFullProfiles({
-  first_name: 'Nigel',
-  last_name: 'Fletcher',
-  company:
-    'US Navy - Naval Air Warfare Center, Aircraft Division - Lakehurst - NAWC-AD',
-});
+// fetchGoogleFullProfiles({
+//   first_name: 'Nigel',
+//   last_name: 'Fletcher',
+//   company:
+//     'US Navy - Naval Air Warfare Center, Aircraft Division - Lakehurst - NAWC-AD',
+// });

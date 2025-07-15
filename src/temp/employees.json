@@ -1,1 +1,68 @@
-{}
+{
+  "army.mil": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/united-states-department-of-the-army/about",
+    "M": "Government Administration",
+    "N": "Government"
+  },
+  "navy.mil": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/commander-navy-installations-command-cnic-hq/about",
+    "M": "Armed Forces",
+    "N": "Government"
+  },
+  "us.af.mil": {
+    "K": "5001-10000",
+    "L": "https://www.linkedin.com/company/air-force-research-laboratory/about",
+    "M": "Armed Forces",
+    "N": "Government"
+  },
+  "raytheon.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/raytheon/about",
+    "M": "Defense and Space Manufacturing",
+    "N": "Aerospace / Aviation"
+  },
+  "spaceforce.mil": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/spaceforcedod/about",
+    "M": "Defense and Space Manufacturing",
+    "N": "Aerospace / Aviation"
+  },
+  "useagle.org": {
+    "K": "201-500",
+    "L": "https://www.linkedin.com/company/useaglefcu/about",
+    "M": "Financial Services",
+    "N": "Finance"
+  },
+  "mail.mil": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/disadod/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "sapns2.com": {
+    "K": "501-1000",
+    "L": "https://www.linkedin.com/company/sapns2/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "summit7.us": {
+    "K": "201-500",
+    "L": "https://www.linkedin.com/company/summit-7-systems/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "verizonwireless.com": {
+    "K": "10001+",
+    "L": "https://www.linkedin.com/company/verizon/about",
+    "M": "IT Services and IT Consulting",
+    "N": "Computers and Technology"
+  },
+  "unity.com": {
+    "K": "201-500",
+    "L": "https://www.linkedin.com/school/universidad-libre//about",
+    "M": "Higher Education",
+    "N": "Education"
+  }
+}
